@@ -5,19 +5,29 @@ import SwiftUI
 @main 
 struct macVisionApp: App {
     @State private var appState = AppState() //Track the status of macVision
+    @State private var hudController = HUDController() //Control the HUD in the status bar top right
 
     var body: some Scene {
-        MenuBarExtra(
-            "macVision",
-            systemImage: appState.isActive ? "eye.fill" : "eye"
-        ) {
-
+        MenuBarExtra{
             MenuBarView(appState : appState)
+        } label: {
+            Image(
+                systemName: appState.isActive ? "eye.fill" : "eye"
+            )
+            .accessibilityLabel("macVision")
+            .onChange(of: appState.isActive, initial: true){
+                _, isActive in
+
+                if isActive {
+                    hudController.show()
+                }else{
+                    hudController.hide()
+                }
+            }
         }
 
-        Settings {
-            SettingsView(appState: appState)
+        Settings { 
+            SettingsView(appState : appState)
         }
-        
     }
 }
