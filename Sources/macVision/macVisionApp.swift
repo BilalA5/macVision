@@ -23,3 +23,4 @@ struct macVisionApp: App {
             }
         }
     }
+}

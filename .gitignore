@@ -1,0 +1,9 @@
+# Swift Package Manager build output
+.build/
+
+# Local app packaging output
+/build/
+/dist/
+
+# macOS Finder metadata
+.DS_Store
