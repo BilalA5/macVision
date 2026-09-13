@@ -12,21 +12,7 @@ struct macVisionApp: App {
             systemImage: appState.isActive ? "eye.fill" : "eye"
         ) {
 
-            SettingsLink {
-                Text("Settings")
-            }
-
-            
-            Text(appState.isActive ? "macVision on" : "macVision off")
-            Button(appState.isActive ? "Deactivate" : "Activate") { //Toggle on or off
-                appState.toggleActivation()
-            }
-
-            Divider()
-
-            Button("Quit") { //Quit macVision
-                NSApplication.shared.terminate(nil)
-            }
+            MenuBarView(appState : appState)
         }
 
         Settings {
