@@ -1,4 +1,4 @@
-import observation
+import Observation
 
 enum ActivationState {
     case off // macVision is off

@@ -4,16 +4,22 @@ import SwiftUI
 // The main app struct that initializes the menu bar extra
 @main 
 struct macVisionApp: App {
-    @State private var isActive = false //Track the status of macVision
+    @State private var appState = AppState() //Track the status of macVision
 
     var body: some Scene {
         MenuBarExtra(
             "macVision",
-            systemImage: isActive ? "eye.fill" : "eye"
+            systemImage: appState.isActive ? "eye.fill" : "eye"
         ) {
-            Text(isActive ? "macVision on" : "macVision off")
-            Button(isActive ? "Deactivate" : "Activate") { //Toggle on or off
-                isActive.toggle()
+
+            SettingsLink {
+                Text("Settings")
+            }
+
+            
+            Text(appState.isActive ? "macVision on" : "macVision off")
+            Button(appState.isActive ? "Deactivate" : "Activate") { //Toggle on or off
+                appState.toggleActivation()
             }
 
             Divider()
@@ -22,5 +28,10 @@ struct macVisionApp: App {
                 NSApplication.shared.terminate(nil)
             }
         }
+
+        Settings {
+            SettingsView(appState: appState)
+        }
+        
     }
 }
