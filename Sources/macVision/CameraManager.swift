@@ -49,10 +49,10 @@ final class CameraManager : @unchecked Sendable {
             guard session.isRunning else {
                 return
             }
+            session.stopRunning()
+            logger.info("Camera session stopped.")
         }
 
-        session.stopRunning()
-        logger.info("Camera session stopped.")
     }
 
     private func configure() throws {
@@ -76,6 +76,8 @@ final class CameraManager : @unchecked Sendable {
         guard session.canAddInput(input) else {
             throw CameraError.cannotAddInput
         }
+
+        session.addInput(input)
 
         guard session.canAddOutput(output) else {
             session.removeInput(input)
