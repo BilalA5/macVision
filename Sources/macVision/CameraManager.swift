@@ -9,7 +9,7 @@ final class CameraManager : @unchecked Sendable {
     private var isConfigured = false
 
     @MainActor
-    func makePreviewLayerreviewLayer() -> AVCaptureVideoPreviewLayer {
+    func makePreviewLayer() -> AVCaptureVideoPreviewLayer {
         let previewLayer = AVCaptureVideoPreviewLayer(session : session)
         previewLayer.videoGravity = .resizeAspect
         return previewLayer
