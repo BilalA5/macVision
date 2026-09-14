@@ -8,6 +8,13 @@ final class CameraManager : @unchecked Sendable {
 
     private var isConfigured = false
 
+    @MainActor
+    func previewLayer() -> AVCaptureVideoPreviewLayer {
+        let previewLayer = AVCaptureVideoPreviewLayer(session : session)
+        previewLayer.videoGravity = .resizeAspect
+        return previewLayer
+    }
+
     func start() {
         queue.async { [self] in
             guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else{
