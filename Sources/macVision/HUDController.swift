@@ -6,6 +6,7 @@ final class HUDController {
     private var panel: NSPanel?
 
     func show() {
+        print("HUD show() called")
         guard let screen = NSScreen.main else {
             return
         }
