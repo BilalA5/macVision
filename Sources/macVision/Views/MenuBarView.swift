@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 struct MenuBarView: View {
+    @Environment(\.openWindow) private var openWindow
     let appState: AppState
 
     var body: some View {
@@ -12,6 +13,11 @@ struct MenuBarView: View {
         }
 
         Divider()
+
+        Button("Open macVision"){
+            openWindow(id: "main")
+            NSApplication.shared.activate(ignoringOtherApps: true)
+        }
 
         SettingsLink{
             Text("Settings")
