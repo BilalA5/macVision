@@ -8,9 +8,14 @@ struct macVisionApp: App {
     @State private var hudController = HUDController() //Control the HUD in the status bar top right
 
     var body: some Scene {
+        Window("macVision", id: "main"){
+            MainWindowView(appState : appState)
+        }
+        .defaultSize(width: 520, height: 360)
+
         MenuBarExtra{
             MenuBarView(appState : appState)
-        } label: {
+        }label:{
             Image(
                 systemName: appState.isActive ? "eye.fill" : "eye"
             )
