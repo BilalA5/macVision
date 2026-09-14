@@ -6,15 +6,33 @@ enum ActivationState {
     case active //macVision is in use
 }
 
+@MainActor
 @Observable
 final class AppState {
-    var activationState: ActivationState = .off //default state off
+    @ObservationIgnored
+    let camera = CameraManager()
+
+    private(set) var activationState : ActivationState = .off //default state off
 
     var isActive: Bool {
         activationState == .active
     }
 
     func toggleActivation() {
-        activationState = isActive ? .off : .active
+        if isActive {
+            deactivate()
+        }else{
+            activate()
+        }
+    }
+
+    func activate() {
+        activationState = .active
+        camera.start()
+    }
+
+    func deactivate() {
+        activationState = .off
+        camera.stop()
     }
 }
