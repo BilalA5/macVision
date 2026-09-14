@@ -10,7 +10,7 @@ struct CameraPreview : NSViewRepresentable {
         CameraPreviewNSView(previewLayer : camera.makePreviewLayer())
     }
 
-    func updatedNSView(_ nsView : CameraPreviewNSView, context : Context) {
+    func updateNSView(_ nsView : CameraPreviewNSView, context : Context) {
         //pass
     }
 }
@@ -38,6 +38,6 @@ final class CameraPreviewNSView : NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         previewLayer.frame = bounds
-        CATransaction.comit()
+        CATransaction.commit()
     }
 }
