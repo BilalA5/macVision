@@ -24,14 +24,7 @@ struct MainWindowView: View {
 
         Divider()
 
-        VStack(alignment: .leading, spacing: 8){
-            Text("Camera setup")
-            .font(.headline)
-
-            Text("Camera capture isn't connected yet. This area will help you check that your hands are visible from a comfortable working position")
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        CameraSetupView()
 
         Spacer()
 
