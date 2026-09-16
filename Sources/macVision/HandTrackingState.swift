@@ -15,13 +15,13 @@ final class HandTrackingState {
         resetResults()
     }
 
-    func update(handDetected: Bool, confidentJoinCount: Int, processingMilliseconds: Double){
+    func update(handDetected: Bool, confidentJointCount: Int, processingMilliseconds: Double){
         guard isEnabled else {
             return
         }
 
         self.handDetected = handDetected
-        self.confidentJoinCount = confidentJoinCount
+        self.confidentJointCount = confidentJointCount
         self.processingMilliseconds = processingMilliseconds
     }
 

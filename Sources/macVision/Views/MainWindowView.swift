@@ -35,6 +35,17 @@ struct MainWindowView: View {
                     Text("Camera preview")
                         .font(.headline)
 
+                    if appState.handTracking.isEnabled {
+                        Text(appState.handTracking.handDetected ? "Hand detected" : "No hand detected")
+                        Text("Confident joints : \(appState.handTracking.confidentJointCount)/21")
+                        Text("Processing : \(appState.handTracking.processingMilliseconds, specifier : "%.1f") ms")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }else{
+                        Text("Hand Tracking disabled")
+                        .foregroundStyle(.secondary)
+                    }
+
                     ZStack {
                         Color.black
 

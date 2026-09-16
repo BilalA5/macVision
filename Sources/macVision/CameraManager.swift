@@ -6,7 +6,13 @@ final class CameraManager : @unchecked Sendable {
     private let queue = DispatchQueue(label: "macVision.camera")
     private let logger = Logger(subsystem: "com.macVision.app", category: "Camera")
 
+    private let handTracker : HandTracker
+
     private var isConfigured = false
+
+    init(trackingState : HandTrackingState) {
+        handTracker = HandTracker(state : trackingState)
+    }
 
     @MainActor
     func makePreviewLayer() -> AVCaptureVideoPreviewLayer {
@@ -64,6 +70,8 @@ final class CameraManager : @unchecked Sendable {
         let output = AVCaptureVideoDataOutput()
 
         output.alwaysDiscardsLateVideoFrames = true
+
+        output.setSampleBufferDelegate(handTracker, queue : handTracker.processingQueue)
 
         session.beginConfiguration()
 
