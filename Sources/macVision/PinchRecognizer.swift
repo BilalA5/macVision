@@ -13,13 +13,18 @@ struct PinchRecognizer : Sendable {
 
     private(set) var state : State = .waitingForRelease
 
-    private let closeThreshold = 0.25
-    private let openThreshold = 0.40
+    private let closeThreshold: Double
+    private let openThreshold: Double
     private let confirmationSeconds = 0.05
     private let maximumFrameGap = 0.20
 
     private var candidateStartedAt: Double?
     private var previousTimestamp: Double?
+
+    init(closeThreshold: Double = 0.25, openThreshold: Double = 0.40) {
+        self.closeThreshold = closeThreshold
+        self.openThreshold = openThreshold
+    }
 
     mutating func update(measurement : PinchMeasurement?, timestamp : Double) -> Event? {
         guard timestamp.isFinite, let measurement, measurement.ratio.isFinite else {
