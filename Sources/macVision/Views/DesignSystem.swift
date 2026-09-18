@@ -155,3 +155,18 @@ extension GestureKind {
         }
     }
 }
+
+struct WindowAppearance: NSViewRepresentable {
+    func makeNSView(context: Context) -> WindowConfigurationView { WindowConfigurationView() }
+    func updateNSView(_ view: WindowConfigurationView, context: Context) { }
+}
+
+final class WindowConfigurationView: NSView {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        window?.titlebarAppearsTransparent = true
+        window?.isMovableByWindowBackground = true
+        window?.backgroundColor = .clear
+        window?.isOpaque = false
+    }
+}

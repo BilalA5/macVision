@@ -33,6 +33,7 @@ struct MainWindowView: View {
             if opaque { VisionStyle.canvas(scheme) }
             else { GlassMaterial(material: .underWindowBackground) }
         }
+        .background(WindowAppearance().frame(width: 0, height: 0))
         .font(.system(size: 13))
         .tint(VisionStyle.green)
         .frame(minWidth: 800, minHeight: 600)
