@@ -11,7 +11,7 @@ struct macVisionApp: App {
         Window("macVision", id: "main"){
             MainWindowView(appState : appState)
         }
-        .defaultSize(width: 520, height: 360)
+        .defaultSize(width: 700, height: 740)
 
         MenuBarExtra{
             MenuBarView(appState : appState)

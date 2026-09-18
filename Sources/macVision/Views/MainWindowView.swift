@@ -14,7 +14,7 @@ struct MainWindowView: View {
 
                 HStack {
                     Label(
-                        appState.isActive ? "Active" : "Off",
+                        appState.statusText,
                         systemImage: appState.isActive
                             ? "eye.fill"
                             : "eye"
@@ -23,9 +23,26 @@ struct MainWindowView: View {
                     Spacer()
 
                     Button(
-                        appState.isActive ? "Deactivate" : "Activate"
+                        (appState.isActive || appState.isStarting) ? "Deactivate" : "Activate"
                     ) {
                         appState.toggleActivation()
+                    }
+                }
+
+                if let error = appState.errorMessage {
+                    Text(error).foregroundStyle(.red)
+                }
+
+                if !appState.settings.preferences.onboardingComplete {
+                    GroupBox("Welcome to macVision") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("1. Allow camera access and activate.\n2. Check the green points and practice a pinch.\n3. Review your shortcuts, grant Accessibility access, then enable actions.")
+                            Text("Calibration is optional. Camera frames are processed locally and are not saved.")
+                                .font(.caption).foregroundStyle(.secondary)
+                            Button("Finish setup") { appState.settings.finishOnboarding() }
+                                .disabled(!appState.isActive || !appState.handTracking.handDetected)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
 
@@ -79,9 +96,12 @@ struct MainWindowView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                CalibrationView(appState: appState)
+                Divider()
+                GestureControlsView(appState: appState)
             }
             .padding(28)
         }
-        .frame(minWidth: 480, minHeight: 360)
+        .frame(minWidth: 640, minHeight: 480)
     }
 }

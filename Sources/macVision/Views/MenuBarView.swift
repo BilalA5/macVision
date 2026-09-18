@@ -6,10 +6,17 @@ struct MenuBarView: View {
     let appState: AppState
 
     var body: some View {
-        Text(appState.isActive ? "macVision Active" : "macVision Off")
+        Text("macVision: \(appState.statusText)")
 
-        Button(appState.isActive ? "Deactivate" : "Activate"){
+        Button((appState.isActive || appState.isStarting) ? "Deactivate" : "Activate"){
             appState.toggleActivation()
+        }
+
+        if appState.isActive {
+            Button(appState.actionsEnabled ? "Pause actions" : "Enable actions") {
+                appState.setActionsEnabled(!appState.actionsEnabled)
+            }
+            Text(appState.lastActionText)
         }
 
         Divider()
@@ -26,6 +33,7 @@ struct MenuBarView: View {
         Divider()
 
         Button("Quit macVision"){
+            appState.deactivate()
             NSApplication.shared.terminate(nil)
         }
     }
