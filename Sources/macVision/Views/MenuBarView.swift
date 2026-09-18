@@ -4,6 +4,9 @@ import AppKit
 struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
     let appState: AppState
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+    @State private var hoveredItem: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -19,13 +22,16 @@ struct MenuBarView: View {
                 Spacer()
                 Button(action: appState.toggleActivation) {
                     Image(systemName: "power").font(.system(size: 14)).frame(width: 28, height: 28)
-                }.buttonStyle(.bordered).help(appState.isActive ? "Deactivate" : "Activate")
+                }.buttonStyle(.bordered).help(appState.isStarting ? "Cancel camera startup" : appState.isActive ? "Deactivate" : "Activate")
             }.padding(14)
             Divider()
             VStack(spacing: 2) {
                 menuItem(appState.actionsEnabled ? "Pause actions" : "Enable actions", symbol: appState.actionsEnabled ? "pause" : "checkmark") {
                     appState.setActionsEnabled(!appState.actionsEnabled)
-                }.disabled(!appState.isActive)
+                }.disabled(!appState.isActive || !appState.accessibilityGranted || appState.showsOnboarding || appState.calibration.isCollecting)
+                if appState.isActive && !appState.accessibilityGranted {
+                    menuItem("Allow Accessibility access", symbol: "lock.open") { appState.requestAccessibility() }
+                }
                 menuItem("Open macVision", symbol: "macwindow") { open(.overview) }
                 menuItem("Practice & calibration", symbol: "viewfinder") { open(.practice) }
                 menuItem("Settings", symbol: "slider.horizontal.3") { open(.settings) }
@@ -39,6 +45,7 @@ struct MenuBarView: View {
             }.padding(12)
         }
         .frame(width: 270)
+        .background(VisionStyle.canvas(scheme).opacity(systemReduceTransparency || appState.presentation.reduceTransparency ? 1 : 0.88))
         .tint(VisionStyle.green)
         .preferredColorScheme(appState.presentation.colorScheme)
     }
@@ -50,7 +57,9 @@ struct MenuBarView: View {
                 Text(title).font(.system(size: 12))
                 Spacer()
             }.padding(.horizontal, 8).frame(height: 32).contentShape(Rectangle())
+                .background(hoveredItem == title ? Color.primary.opacity(0.07) : .clear, in: RoundedRectangle(cornerRadius: 6))
         }.buttonStyle(.plain)
+            .onHover { hoveredItem = $0 ? title : nil }
     }
 
     private func open(_ section: AppSection) {

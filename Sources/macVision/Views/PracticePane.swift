@@ -27,11 +27,15 @@ struct PracticePane: View {
                 .frame(height: expanded ? 280 : 232)
             VStack(spacing: 8) {
                 Text(guidance).font(.system(size: 16, weight: .medium))
-                Text(appState.isActive ? "Open your fingers, pinch gently, then release." : "Sit comfortably, then activate to see your hand landmarks.")
+                Text(appState.isActive ? "Open your fingers, pinch gently, then release." : appState.errorMessage ?? "Sit comfortably, then activate to see your hand landmarks.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
                 if !appState.isActive {
                     Button(appState.isStarting ? "Cancel" : "Activate camera", action: appState.toggleActivation)
                         .buttonStyle(.borderedProminent).padding(.top, 4)
+                    if appState.errorMessage != nil {
+                        Button("Review permissions") { appState.selectedSection = .settings }
+                            .buttonStyle(.plain).font(.caption).foregroundStyle(VisionStyle.green)
+                    }
                 } else {
                     StatusBadge(title: "Actions paused", color: .secondary)
                 }
