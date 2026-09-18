@@ -24,6 +24,16 @@ struct CameraPreview: NSViewRepresentable {
 final class CameraPreviewNSView: NSView {
     private let previewLayer: AVCaptureVideoPreviewLayer
     private let jointsLayer = CAShapeLayer()
+    private let connectionsLayer = CAShapeLayer()
+    private let fingertipsLayer = CAShapeLayer()
+    private let fingers: [[HandJoint]] = [
+        [.wrist, .thumbCMC, .thumbMP, .thumbIP, .thumbTip],
+        [.wrist, .indexMCP, .indexPIP, .indexDIP, .indexTip],
+        [.indexMCP, .middleMCP, .middlePIP, .middleDIP, .middleTip],
+        [.middleMCP, .ringMCP, .ringPIP, .ringDIP, .ringTip],
+        [.ringMCP, .littleMCP, .littlePIP, .littleDIP, .littleTip],
+        [.wrist, .littleMCP]
+    ]
 
     private var handFrame: HandFrame?
 
@@ -40,8 +50,17 @@ final class CameraPreviewNSView: NSView {
         layer?.backgroundColor = NSColor.black.cgColor
         layer?.addSublayer(previewLayer)
 
+        connectionsLayer.fillColor = nil
+        connectionsLayer.strokeColor = NSColor.systemGreen.withAlphaComponent(0.7).cgColor
+        connectionsLayer.lineWidth = 1.25
+        connectionsLayer.lineCap = .round
+        previewLayer.addSublayer(connectionsLayer)
+        fingertipsLayer.fillColor = NSColor.white.cgColor
+        fingertipsLayer.strokeColor = NSColor.systemGreen.cgColor
+        fingertipsLayer.lineWidth = 1.5
         jointsLayer.fillColor = NSColor.systemGreen.cgColor
         previewLayer.addSublayer(jointsLayer)
+        previewLayer.addSublayer(fingertipsLayer)
     }
 
     required init?(coder: NSCoder) {
@@ -61,6 +80,8 @@ final class CameraPreviewNSView: NSView {
 
         previewLayer.frame = bounds
         jointsLayer.frame = previewLayer.bounds
+        connectionsLayer.frame = previewLayer.bounds
+        fingertipsLayer.frame = previewLayer.bounds
 
         CATransaction.commit()
 
@@ -68,42 +89,34 @@ final class CameraPreviewNSView: NSView {
     }
 
     private func redrawJoints() {
-        let path = CGMutablePath()
-
+        let dots = CGMutablePath()
+        let bones = CGMutablePath()
+        let tips = CGMutablePath()
+        var positions: [HandJoint: CGPoint] = [:]
         if let handFrame {
             for joint in HandJoint.allCases {
-                guard let landmark =
-                    handFrame.reliableLandmark(joint) else {
-                    continue
+                guard let landmark = handFrame.reliableLandmark(joint) else { continue }
+                let capturePoint = CGPoint(x: CGFloat(landmark.x), y: CGFloat(1 - landmark.y))
+                let point = previewLayer.layerPointConverted(fromCaptureDevicePoint: capturePoint)
+                positions[joint] = point
+                let isTip = joint == .thumbTip || joint == .indexTip
+                let radius: CGFloat = isTip ? 3.5 : 2.5
+                let rect = CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2)
+                if isTip { tips.addEllipse(in: rect) } else { dots.addEllipse(in: rect) }
+            }
+            for finger in fingers {
+                for (first, second) in zip(finger, finger.dropFirst()) {
+                    guard let start = positions[first], let end = positions[second] else { continue }
+                    bones.move(to: start)
+                    bones.addLine(to: end)
                 }
-
-                // Vision uses a bottom-left origin.
-                // Capture-device coordinates use a top-left origin.
-                let capturePoint = CGPoint(
-                    x: CGFloat(landmark.x),
-                    y: CGFloat(1 - landmark.y)
-                )
-
-                let displayPoint = previewLayer.layerPointConverted(
-                    fromCaptureDevicePoint: capturePoint
-                )
-
-                let radius: CGFloat = 4
-
-                path.addEllipse(
-                    in: CGRect(
-                        x: displayPoint.x - radius,
-                        y: displayPoint.y - radius,
-                        width: radius * 2,
-                        height: radius * 2
-                    )
-                )
             }
         }
-
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        jointsLayer.path = path
+        jointsLayer.path = dots
+        connectionsLayer.path = bones
+        fingertipsLayer.path = tips
         CATransaction.commit()
     }
 }
