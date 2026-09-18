@@ -5,6 +5,12 @@ import Observation
 @MainActor @Observable
 final class AppState {
     let handTracking = HandTrackingState()
+    let presentation = PresentationSettings()
+    var selectedSection: AppSection = .overview
+    var showsOnboarding = false
+    var hasPresentedOnboarding = false
+    private(set) var recentActivity: [GestureActivity] = []
+    private(set) var hudMessage: HUDMessage?
     let settings = GestureSettings()
     let calibration = CalibrationSession()
     private(set) var isActive = false
@@ -27,7 +33,8 @@ final class AppState {
         failure: { [weak self] token, message in self?.captureFailed(token: token, message: message) }
     )
 
-    init() {
+    init(enableSystemServices: Bool = true) {
+        guard enableSystemServices else { return }
         accessibilityGranted = executor.hasPermission
         activationHotKey = ActivationHotKey { [weak self] in self?.toggleActivation() }
         activationShortcutAvailable = activationHotKey?.isRegistered == true
@@ -40,6 +47,20 @@ final class AppState {
         watchdog = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.checkCaptureHealth() }
         }
+    }
+
+    var modeTitle: String {
+        if isStarting { return "Starting camera" }
+        if errorMessage != nil && !isActive { return "Camera unavailable" }
+        if !isActive { return "Off" }
+        return actionsEnabled ? "Actions enabled" : "Practice mode"
+    }
+
+    var modeDescription: String {
+        if isStarting { return "Opening your camera and preparing hand tracking." }
+        if let errorMessage, !isActive { return errorMessage }
+        if !isActive { return "Your camera is off. Activate when you’re ready to use gestures." }
+        return actionsEnabled ? "Gestures send your shortcuts to the foreground app." : "Your camera is on. Try a gesture — no shortcuts will be sent."
     }
 
     var statusText: String { isStarting ? "Starting camera…" : (isActive ? "Active" : "Off") }
@@ -74,11 +95,13 @@ final class AppState {
                 self.lastSampleAt = ProcessInfo.processInfo.systemUptime
                 self.handTracking.setEnabled(true)
                 self.isActive = true
+                self.hudMessage = HUDMessage(text: "Ready to practice", symbol: "hand.pinch")
             }
         }
     }
 
     func deactivate() {
+        hudMessage = HUDMessage(text: "Camera off", symbol: "power", tone: .neutral)
         generation = UUID() // Invalidates every queued observation and completion.
         isActive = false
         isStarting = false
@@ -91,11 +114,14 @@ final class AppState {
 
     func setActionsEnabled(_ enabled: Bool) {
         refreshPermissions()
-        guard !enabled || (isActive && accessibilityGranted && !calibration.isCollecting) else {
+        guard !enabled || (isActive && accessibilityGranted && !calibration.isCollecting && !showsOnboarding) else {
             lastActionText = "Activate the camera and allow Accessibility access first."
             return
         }
         actionsEnabled = enabled
+        if enabled { selectedSection = .overview }
+        hudMessage = HUDMessage(text: enabled ? "Actions enabled" : "Actions paused",
+                                symbol: enabled ? "checkmark" : "pause", tone: enabled ? .success : .neutral)
         lastActionText = enabled ? "Actions enabled" : "Practice mode: actions are off"
         restartRecognition()
     }
@@ -143,6 +169,12 @@ final class AppState {
         }
         guard let gesture = sample.gesture else { return }
         lastGestureText = gesture.title
+        defer {
+            recentActivity.insert(GestureActivity(gesture: gesture, detail: lastActionText), at: 0)
+            recentActivity = Array(recentActivity.prefix(4))
+            hudMessage = HUDMessage(text: lastActionText.hasPrefix("Sent") ? (settings.preferences.bindings[gesture.rawValue]?.actionTitle ?? gesture.title) : lastActionText,
+                                    symbol: gesture.symbol, tone: actionsEnabled ? .success : .neutral)
+        }
         guard actionsEnabled else { lastActionText = "Practice: \(gesture.title)"; return }
         guard let shortcut = settings.preferences.bindings[gesture.rawValue] else {
             lastActionText = "No action assigned to \(gesture.title)"
@@ -165,6 +197,7 @@ final class AppState {
         guard token == generation else { return }
         deactivate()
         errorMessage = message
+        hudMessage = HUDMessage(text: "Camera unavailable", symbol: "exclamationmark.triangle", tone: .error)
     }
 
     private func checkCaptureHealth() {
