@@ -65,3 +65,22 @@ The local app is created at `build/macVision.app`; the installer is `dist/macVis
 Keep the bundle ID stable to preserve permissions. Ad-hoc rebuilds can require re-granting Accessibility access. UI/icon polish, notch animation, installer artwork, and public-release signing are separate from the working MVP foundation.
 
 See [the live test checklist](docs/manual-testing.md) before treating gesture accuracy or background use as verified.
+
+## Native interface
+
+The SwiftUI interface follows the supplied React visual specification: a material sidebar, Overview, editable Gestures, circular/expanded Practice, native Preferences, and first-run onboarding. The prototype's simulated permissions and diagnostics have been replaced with the actual app state.
+
+- `Views/DesignSystem.swift` owns the palette, panel treatment, keycaps, typography and native material bridge.
+- `PresentationSettings` stores appearance, reduced transparency/motion, and HUD preferences. Login-item changes use macOS ServiceManagement and display errors when unavailable.
+- Entering Practice or onboarding pauses actions. The camera stays under the explicit activation control.
+- The green landmark map includes finger connections and distinct thumb/index tips. Full preview remains available when a circular crop hides part of the hand.
+- Gesture feedback appears briefly below the physical notch. Displays without a notch use a top-center panel. The overlay never accepts mouse input or keyboard focus.
+- The menu-bar popover opens any pane and exposes activation and action controls.
+
+Render the actual SwiftUI views without capturing your desktop or starting the camera:
+
+```sh
+./scripts/render-ui.sh
+```
+
+PNG previews are written to `.build/ui-previews/`. They use opaque accessibility surfaces for reproducible offscreen rendering. The rendered shortcut-availability warning is expected because the renderer intentionally does not register a global hot key. Native translucency, live camera alignment, login-item approval, and physical-notch placement still require live checks on the destination Mac.

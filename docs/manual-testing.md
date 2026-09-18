@@ -38,3 +38,16 @@ Automated tests use synthetic hand coordinates; they cannot verify camera qualit
 ## Performance
 
 Use Activity Monitor with the main window open and closed. Observe CPU, memory, energy use, and gesture responsiveness for at least several minutes. Test warm-up separately. The UI processing time is not end-to-end latency. Do not claim latency, battery, or accuracy targets from synthetic tests alone.
+
+## Native UI acceptance
+
+- Resize the main window from 800 × 600 upward. Each pane should scroll without hiding controls horizontally.
+- Switch between System, Light, and Dark; restart and confirm the chosen appearance persists.
+- Enable Reduce transparency and Reduce motion in the app and macOS Accessibility settings; verify solid surfaces and immediate HUD changes.
+- Navigate using the keyboard; ensure toggles, sidebar buttons, shortcut recording, and onboarding are reachable.
+- Replay onboarding from both the main Settings pane and the macOS Settings window: exactly one sheet opens.
+- Enter Practice while actions are enabled: actions pause. Enabling actions from the menu returns the main interface to Overview.
+- Check camera ring and connected green landmarks against the live image in circular and full preview modes.
+- Activate or complete a gesture on a notched MacBook and on an external display: the HUD text stays below hardware, does not steal focus, and dismisses.
+- Disable notch feedback: any visible HUD disappears and new gestures do not show it.
+- Try Launch at login from the bundled app. Respect any macOS approval step, and verify login launches with the camera off.
