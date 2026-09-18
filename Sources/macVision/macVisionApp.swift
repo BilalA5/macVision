@@ -1,38 +1,32 @@
 import SwiftUI
 
-
-// The main app struct that initializes the menu bar extra
-@main 
+@main
 struct macVisionApp: App {
-    @State private var appState = AppState() //Track the status of macVision
-    @State private var hudController = HUDController() //Control the HUD in the status bar top right
+    @State private var appState = AppState()
+    @State private var hudController = HUDController()
 
     var body: some Scene {
-        Window("macVision", id: "main"){
-            MainWindowView(appState : appState)
+        Window("macVision", id: "main") {
+            MainWindowView(appState: appState)
         }
-        .defaultSize(width: 700, height: 740)
+        .defaultSize(width: 860, height: 680)
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)
 
-        MenuBarExtra{
-            MenuBarView(appState : appState)
-        }label:{
-            Image(
-                systemName: appState.isActive ? "eye.fill" : "eye"
-            )
-            .accessibilityLabel("macVision")
-            .onChange(of: appState.isActive, initial: true){
-                _, isActive in
-
-                if isActive {
-                    hudController.show()
-                }else{
-                    hudController.hide()
+        MenuBarExtra {
+            MenuBarView(appState: appState)
+        } label: {
+            Image(systemName: appState.isActive ? "hand.pinch.fill" : "hand.pinch")
+                .accessibilityLabel("macVision")
+                .onChange(of: appState.hudMessage) { _, message in
+                    if let message { hudController.show(message, preferences: appState.presentation) }
                 }
-            }
+                .onChange(of: appState.presentation.showHUD) { _, show in
+                    if !show { hudController.hide() }
+                }
         }
+        .menuBarExtraStyle(.window)
 
-        Settings { 
-            SettingsView(appState : appState)
-        }
+        Settings { SettingsView(appState: appState) }
     }
 }
