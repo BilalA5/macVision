@@ -84,6 +84,13 @@ func ambiguousDiagonalAndHandJumpCancel() {
 func pinchRatioAccountsForImageAspectAndRejectsMissingJoints() {
     let frame = hand(0, ratio: 0.2)
     expect(abs((PinchMeasurement(frame: frame)?.ratio ?? -1) - 0.2) < 0.0001)
+    let wide = HandFrame(timeStamp: 0, imageWidth: 2000, imageHeight: 1000, landmarks: [
+        .wrist: HandLandmark(x: 0.5, y: 0.4, confidence: 1),
+        .middleMCP: HandLandmark(x: 0.5, y: 0.5, confidence: 1),
+        .thumbTip: HandLandmark(x: 0.5, y: 0.55, confidence: 1),
+        .indexTip: HandLandmark(x: 0.51, y: 0.55, confidence: 1)
+    ])
+    expect(abs((PinchMeasurement(frame: wide)?.ratio ?? -1) - 0.2) < 0.0001)
     let empty = HandFrame(timeStamp: 0, imageWidth: 1280, imageHeight: 720, landmarks: [:])
     expect(PinchMeasurement(frame: empty) == nil)
 }
