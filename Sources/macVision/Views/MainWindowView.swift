@@ -3,6 +3,8 @@ import SwiftUI
 struct MainWindowView: View {
     let appState: AppState
 
+
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -36,11 +38,23 @@ struct MainWindowView: View {
                         .font(.headline)
 
                     if appState.handTracking.isEnabled {
+                        Text(appState.handTracking.pinchStatusText)
+                            .font(.headline)
                         Text(appState.handTracking.handDetected ? "Hand detected" : "No hand detected")
                         Text("Confident joints : \(appState.handTracking.confidentJointCount)/21")
                         Text("Processing : \(appState.handTracking.processingMilliseconds, specifier : "%.1f") ms")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                        if let frame = appState.handTracking.latestFrame, let pinch = PinchMeasurement(frame : frame) {
+                            Text("Pinch ratio : \(pinch.ratio, specifier : "%.2f")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }else{
+                            Text("Not enough landmarks to calculate pinch ratio")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
                     }else{
                         Text("Hand Tracking disabled")
                         .foregroundStyle(.secondary)
@@ -49,7 +63,7 @@ struct MainWindowView: View {
                     ZStack {
                         Color.black
 
-                        CameraPreview(camera: appState.camera)
+                        CameraPreview(camera: appState.camera, handFrame : appState.handTracking.latestFrame)
                             .opacity(appState.isActive ? 1 : 0)
 
                         if !appState.isActive {

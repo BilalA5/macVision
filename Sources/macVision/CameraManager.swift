@@ -37,11 +37,13 @@ final class CameraManager : @unchecked Sendable {
                     try configure()
                 }
 
+                handTracker.setTrackingEnabled(true)
                 session.startRunning()
 
                 if session.isRunning {
                     logger.info("Camera session started successfully.")
                 }else{
+                    handTracker.setTrackingEnabled(false)
                     logger.error("Failed to start camera session.")
                 }
             }catch{
@@ -52,6 +54,7 @@ final class CameraManager : @unchecked Sendable {
 
     func stop() {
         queue.async { [self] in
+            handTracker.setTrackingEnabled(false)
             guard session.isRunning else {
                 return
             }
