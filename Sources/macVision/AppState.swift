@@ -173,7 +173,7 @@ final class AppState {
             recentActivity.insert(GestureActivity(gesture: gesture, detail: lastActionText), at: 0)
             recentActivity = Array(recentActivity.prefix(4))
             hudMessage = HUDMessage(text: lastActionText.hasPrefix("Sent") ? (settings.preferences.bindings[gesture.rawValue]?.actionTitle ?? gesture.title) : lastActionText,
-                                    symbol: gesture.symbol, tone: actionsEnabled ? .success : .neutral)
+                                    symbol: gesture.symbol, tone: lastActionText.hasPrefix("Sent ") ? .success : actionsEnabled ? .error : .neutral)
         }
         guard actionsEnabled else { lastActionText = "Practice: \(gesture.title)"; return }
         guard let shortcut = settings.preferences.bindings[gesture.rawValue] else {

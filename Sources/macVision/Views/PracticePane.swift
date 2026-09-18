@@ -64,11 +64,12 @@ struct CameraStage: View {
     let appState: AppState
     var circular = true
     @Environment(\.colorScheme) private var scheme
-    private var tracking: Bool { appState.isActive && appState.handTracking.handDetected }
+    private var tracking: Bool { appState.isActive && appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0) } != nil }
 
     var body: some View {
         GeometryReader { geometry in
             let width = circular ? min(geometry.size.height, 240) : geometry.size.width
+            let shape = circular ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 12))
             ZStack {
                 Color(white: 0.075)
                 if appState.isActive {
@@ -83,9 +84,9 @@ struct CameraStage: View {
                 }
             }
             .frame(width: width, height: geometry.size.height)
-            .clipShape(RoundedRectangle(cornerRadius: circular ? width / 2 : 12))
-            .overlay(RoundedRectangle(cornerRadius: circular ? width / 2 : 12)
-                .strokeBorder(tracking ? VisionStyle.green.opacity(0.8) : Color.primary.opacity(0.15), lineWidth: tracking ? 2 : 1))
+            .clipShape(shape)
+            .overlay(shape
+                .stroke(tracking ? VisionStyle.green.opacity(0.8) : Color.primary.opacity(0.15), lineWidth: tracking ? 2 : 1))
             .padding(3)
             .overlay {
                 if circular {
