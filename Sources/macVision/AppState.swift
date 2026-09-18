@@ -14,9 +14,11 @@ final class AppState {
     private(set) var lastActionText = "Practice mode: actions are off"
     private(set) var actionsEnabled = false
     private(set) var accessibilityGranted = false
+    private(set) var activationShortcutAvailable = false
+    @ObservationIgnored private var activationHotKey: ActivationHotKey?
     @ObservationIgnored private let executor = ActionExecutor()
     @ObservationIgnored private var generation = UUID()
-    @ObservationIgnored private var lastSequence: UInt64 = 0
+    @ObservationIgnored private var deliveryGate = TrackingDeliveryGate()
     @ObservationIgnored private var lastSampleAt: Double = 0
     @ObservationIgnored private var watchdog: Timer?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -27,6 +29,8 @@ final class AppState {
 
     init() {
         accessibilityGranted = executor.hasPermission
+        activationHotKey = ActivationHotKey { [weak self] in self?.toggleActivation() }
+        activationShortcutAvailable = activationHotKey?.isRegistered == true
         observers.append(NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
         ) { [weak self] _ in
@@ -66,7 +70,7 @@ final class AppState {
                 guard let self, self.generation == token else { return }
                 self.isStarting = false
                 if let error { self.errorMessage = error; return }
-                self.lastSequence = 0
+                self.deliveryGate = TrackingDeliveryGate()
                 self.lastSampleAt = ProcessInfo.processInfo.systemUptime
                 self.handTracking.setEnabled(true)
                 self.isActive = true
@@ -102,7 +106,7 @@ final class AppState {
     func restartRecognition() {
         guard isActive else { return }
         generation = UUID()
-        lastSequence = 0
+        deliveryGate = TrackingDeliveryGate()
         handTracking.setEnabled(true)
         camera.start(generation: generation, preferences: settings.preferences) { [weak self] token, error in
             if let error { self?.captureFailed(token: token, message: error) }
@@ -122,9 +126,10 @@ final class AppState {
     }
 
     private func receive(_ sample: TrackingSample) {
-        guard isActive, sample.generation == generation, sample.sequence > lastSequence,
-              ProcessInfo.processInfo.systemUptime - sample.capturedAt < 0.25 else { return }
-        lastSequence = sample.sequence
+        guard isActive, deliveryGate.accept(
+            sequence: sample.sequence, generation: sample.generation, expectedGeneration: generation,
+            capturedAt: sample.capturedAt, now: ProcessInfo.processInfo.systemUptime
+        ) else { return }
         lastSampleAt = ProcessInfo.processInfo.systemUptime
         handTracking.update(
             handDetected: sample.frame != nil,
