@@ -5,6 +5,7 @@ import AppKit
 struct PreferencesPane: View {
     let appState: AppState
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         @Bindable var appearance = appState.presentation
@@ -23,7 +24,11 @@ struct PreferencesPane: View {
                     }
                     Divider()
                     PreferenceRow(title: "First-run walkthrough") {
-                        Button("Show again") { appState.showsOnboarding = true }.controlSize(.small)
+                        Button("Show again") {
+                            openWindow(id: "main")
+                            appState.showsOnboarding = true
+                            NSApplication.shared.activate(ignoringOtherApps: true)
+                        }.controlSize(.small)
                     }
                     if let message = appearance.loginMessage { Text(message).font(.caption).foregroundStyle(.orange) }
                 }
