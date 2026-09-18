@@ -5,6 +5,7 @@ cd "$PROJECT_DIR"
 mkdir -p .build/core-tests .build/module-cache
 swiftc -swift-version 6 -parse-as-library \
     -module-cache-path "$PROJECT_DIR/.build/module-cache" \
+    Sources/macVision/TrackingDeliveryGate.swift \
     Sources/macVision/HandFrame.swift \
     Sources/macVision/PinchMeasurement.swift \
     Sources/macVision/PinchRecognizer.swift \

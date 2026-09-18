@@ -17,6 +17,7 @@ struct TestRunner {
         try preferencesPersistAndClearBindings()
         try invalidCalibrationDoesNotReplaceSettings()
         try corruptPreferencesFallBackWithoutCrashing()
-        print("Passed 10 gesture and settings tests.")
+        staleSessionAndOutOfOrderResultsAreRejected()
+        print("Passed 11 gesture, settings and delivery tests.")
     }
 }
