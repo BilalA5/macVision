@@ -12,6 +12,8 @@ final class CalibrationSession {
     @ObservationIgnored private var startedAt: Double?
     @ObservationIgnored private var deadline: Double = 0
 
+    var canCaptureClosed: Bool { openRatio != nil }
+
     var isCollecting: Bool { phase == .open || phase == .closed }
 
     func beginOpen() {

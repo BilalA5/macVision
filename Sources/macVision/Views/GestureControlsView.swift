@@ -78,6 +78,7 @@ struct CalibrationView: View {
                 HStack {
                     Button("1. Capture open fingers") { appState.beginCalibration(open: true) }
                     Button("2. Capture closed pinch") { appState.beginCalibration(open: false) }
+                        .disabled(!appState.calibration.canCaptureClosed)
                 }
                 .disabled(!appState.isActive)
             }

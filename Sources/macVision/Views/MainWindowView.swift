@@ -29,6 +29,11 @@ struct MainWindowView: View {
                     }
                 }
 
+                Text(appState.activationShortcutAvailable
+                     ? "Activate or stop from any app: ⌃⌥⌘G"
+                     : "Global shortcut unavailable; use the menu-bar Activate/Deactivate control.")
+                    .font(.caption).foregroundStyle(.secondary)
+
                 if let error = appState.errorMessage {
                     Text(error).foregroundStyle(.red)
                 }
