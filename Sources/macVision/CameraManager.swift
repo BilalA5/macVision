@@ -1,119 +1,111 @@
 import AVFoundation
-import OSLog
 
-final class CameraManager : @unchecked Sendable {
+/// Capture configuration and start/stop operations are serialized on queue.
+final class CameraManager: @unchecked Sendable {
     private let session = AVCaptureSession()
     private let queue = DispatchQueue(label: "macVision.camera")
-    private let logger = Logger(subsystem: "com.macVision.app", category: "Camera")
-
-    private let handTracker : HandTracker
-
+    private let handTracker: HandTracker
+    private let failure: @MainActor @Sendable (UUID, String) -> Void
     private var isConfigured = false
+    private var generation: UUID?
+    private var observers: [NSObjectProtocol] = []
 
-    init(trackingState : HandTrackingState) {
-        handTracker = HandTracker(state : trackingState)
+    init(receive: @escaping @MainActor @Sendable (TrackingSample) -> Void,
+         failure: @escaping @MainActor @Sendable (UUID, String) -> Void) {
+        handTracker = HandTracker(receive: receive)
+        self.failure = failure
+        for name in [AVCaptureSession.runtimeErrorNotification,
+                     AVCaptureSession.wasInterruptedNotification,
+                     AVCaptureSession.didStopRunningNotification] {
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: session, queue: nil) {
+                [weak self] _ in self?.captureFailed(force: name != AVCaptureSession.didStopRunningNotification)
+            })
+        }
     }
+
+    deinit { observers.forEach(NotificationCenter.default.removeObserver) }
 
     @MainActor
     func makePreviewLayer() -> AVCaptureVideoPreviewLayer {
-        let previewLayer = AVCaptureVideoPreviewLayer(session : session)
-        previewLayer.videoGravity = .resizeAspect
-        return previewLayer
+        let layer = AVCaptureVideoPreviewLayer(session: session)
+        layer.videoGravity = .resizeAspect
+        return layer
     }
 
-    func start() {
+    func start(generation: UUID, preferences: GesturePreferences,
+               completion: @escaping @MainActor @Sendable (UUID, String?) -> Void) {
         queue.async { [self] in
-            guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else{
-                logger.error("Camera permission ahs not been granted.")
-                return
-            }
-
-            guard !session.isRunning else {
-                return
-            }
-
+            self.generation = generation
             do {
-                if !isConfigured {
-                    try configure()
+                guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
+                    throw CameraError.message("Allow camera access in System Settings → Privacy & Security → Camera.")
                 }
-
-                handTracker.setTrackingEnabled(true)
-                session.startRunning()
-
-                if session.isRunning {
-                    logger.info("Camera session started successfully.")
-                }else{
-                    handTracker.setTrackingEnabled(false)
-                    logger.error("Failed to start camera session.")
+                if !isConfigured { try configure() }
+                handTracker.configure(generation: generation, preferences: preferences)
+                if !session.isRunning { session.startRunning() }
+                guard session.isRunning else {
+                    throw CameraError.message("The camera could not start. Check whether it is available, then try again.")
                 }
-            }catch{
-                logger.error("Camera setup failed : \(error.localizedDescription)")
+                Task { @MainActor in completion(generation, nil) }
+            } catch {
+                handTracker.configure(generation: nil)
+                self.generation = nil
+                if session.isRunning { session.stopRunning() }
+                let message = error.localizedDescription
+                Task { @MainActor in completion(generation, message) }
             }
         }
     }
 
     func stop() {
         queue.async { [self] in
-            handTracker.setTrackingEnabled(false)
-            guard session.isRunning else {
-                return
-            }
-            session.stopRunning()
-            logger.info("Camera session stopped.")
+            generation = nil
+            handTracker.configure(generation: nil)
+            if session.isRunning { session.stopRunning() }
         }
+    }
 
+    private func captureFailed(force: Bool) {
+        queue.async { [self] in
+            // Ignore notifications from an intentional stop or an old session.
+            guard let generation, force || !session.isRunning else { return }
+            self.generation = nil
+            handTracker.configure(generation: nil)
+            Task { @MainActor [failure] in
+                failure(generation, "Camera capture stopped or was interrupted. Activate macVision to retry.")
+            }
+        }
     }
 
     private func configure() throws {
         guard let device = AVCaptureDevice.default(for: .video) else {
-            throw CameraError.noCamera
+            throw CameraError.message("No camera is available.")
         }
-
-        let input = try AVCaptureDeviceInput(device : device)
+        let input = try AVCaptureDeviceInput(device: device)
         let output = AVCaptureVideoDataOutput()
-
         output.alwaysDiscardsLateVideoFrames = true
-
-        output.setSampleBufferDelegate(handTracker, queue : handTracker.processingQueue)
-
+        output.setSampleBufferDelegate(handTracker, queue: handTracker.processingQueue)
         session.beginConfiguration()
-
         defer { session.commitConfiguration() }
-
-        if session.canSetSessionPreset(.hd1280x720) {
-            session.sessionPreset = .hd1280x720
-        }
-
-        guard session.canAddInput(input) else {
-            throw CameraError.cannotAddInput
-        }
-
+        if session.canSetSessionPreset(.hd1280x720) { session.sessionPreset = .hd1280x720 }
+        guard session.canAddInput(input) else { throw CameraError.message("The camera input could not be connected.") }
         session.addInput(input)
-
         guard session.canAddOutput(output) else {
             session.removeInput(input)
-            throw CameraError.cannotAddOutput
+            throw CameraError.message("The video output could not be connected.")
         }
-
         session.addOutput(output)
+        if let connection = output.connection(with: .video), connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = false
+        }
         isConfigured = true
-            
     }
 }
 
 private enum CameraError: LocalizedError {
-    case noCamera
-    case cannotAddInput
-    case cannotAddOutput
-
+    case message(String)
     var errorDescription: String? {
-        switch self {
-        case .noCamera:
-            return "No camera is available."
-        case .cannotAddInput:
-            return "The camera input could not be connected."
-        case .cannotAddOutput:
-            return "The video output could not be connected."
-        }
+        if case .message(let text) = self { text } else { nil }
     }
 }

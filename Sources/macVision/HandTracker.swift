@@ -2,91 +2,82 @@ import AVFoundation
 import Vision
 import OSLog
 
-final class HandTracker:
-    NSObject,
-    AVCaptureVideoDataOutputSampleBufferDelegate,
-    @unchecked Sendable
-{
-    let processingQueue = DispatchQueue(
-        label: "macVision.handTracking",
-        qos: .userInitiated
-    )
+struct TrackingSample: Sendable {
+    let generation: UUID
+    let sequence: UInt64
+    let frame: HandFrame?
+    let pinchState: PinchRecognizer.State
+    let gesture: GestureKind?
+    let processingMilliseconds: Double
+    let capturedAt: Double
+}
 
+/// Mutable Vision/recognizer state belongs exclusively to processingQueue.
+final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
+    let processingQueue = DispatchQueue(label: "macVision.handTracking", qos: .userInitiated)
     private let request = VNDetectHumanHandPoseRequest()
-    private let state: HandTrackingState
-    // Access these only on processingQueue.
-    private var pinchRecognizer = PinchRecognizer()
-    private var isTrackingEnabled = false
+    private let receive: @MainActor @Sendable (TrackingSample) -> Void
+    private let deliverySlot = DispatchSemaphore(value: 1)
+    private var engine = GestureEngine()
+    private var generation: UUID?
+    private var sequence: UInt64 = 0
+    private var lastProcessed = -Double.infinity
+    private var lastPublished = -Double.infinity
 
-    private let logger = Logger(
-        subsystem: "com.macvision.app",
-        category: "HandTracking"
-    )
-
-    init(state: HandTrackingState) {
-        self.state = state
+    init(receive: @escaping @MainActor @Sendable (TrackingSample) -> Void) {
+        self.receive = receive
         super.init()
-
-        request.maximumHandCount = 1
+        // Two visible hands are treated as ambiguous; never switch silently between them.
+        request.maximumHandCount = 2
     }
 
-    func setTrackingEnabled(_ enabled: Bool) {
+    func configure(generation: UUID?, preferences: GesturePreferences = GesturePreferences()) {
         processingQueue.async { [self] in
-            isTrackingEnabled = enabled
-            _ = pinchRecognizer.reset()
+            self.generation = generation
+            engine = GestureEngine(closeThreshold: preferences.closeThreshold,
+                                   openThreshold: preferences.openThreshold)
+            lastProcessed = -.infinity
+            lastPublished = -.infinity
         }
     }
 
-    func captureOutput(
-        _ output: AVCaptureOutput,
-        didOutput sampleBuffer: CMSampleBuffer,
-        from connection: AVCaptureConnection
-    ) {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
+                       from connection: AVCaptureConnection) {
         dispatchPrecondition(condition: .onQueue(processingQueue))
-        guard isTrackingEnabled else { return }
-
-        let startTime = ProcessInfo.processInfo.systemUptime
+        guard let generation else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - lastProcessed >= 1.0 / 30 else { return }
+        lastProcessed = now
+        let timestamp = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+        let hostTime = CMTimeGetSeconds(CMClockGetTime(CMClockGetHostTimeClock()))
+        let age = hostTime - timestamp
+        guard age.isFinite, age >= -0.05, age < 0.20 else { engine.reset(); return }
         var frame: HandFrame?
-
         do {
-            let handler = VNImageRequestHandler(
-                cmSampleBuffer: sampleBuffer,
-                orientation: .up,
-                options: [:]
-            )
-
+            let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
             try handler.perform([request])
-
-            if let hand = request.results?.first {
-                frame = try makeFrame(
-                    from: hand,
-                    sampleBuffer: sampleBuffer
-                )
+            if let hands = request.results, hands.count == 1, let hand = hands.first {
+                frame = try makeFrame(from: hand, sampleBuffer: sampleBuffer)
             }
         } catch {
-            logger.error(
-                "Hand detection failed: \(error.localizedDescription, privacy: .public)"
-            )
+            // A failed observation is tracking loss, never a completed gesture.
+            frame = nil
         }
-
-        let measurement = frame.flatMap { PinchMeasurement(frame: $0) }
-        let event = pinchRecognizer.update(
-            measurement: measurement,
-            timestamp: CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
-        )
-
-        if let event {
-            logger.debug("Pinch event: \(String(describing: event), privacy: .public)")
+        let gesture = engine.update(frame: frame, timestamp: timestamp)
+        let finished = ProcessInfo.processInfo.systemUptime
+        guard gesture != nil || finished - lastPublished >= 1.0 / 15 else { return }
+        // Bounded delivery: never accumulate stale MainActor work behind a busy UI.
+        guard deliverySlot.wait(timeout: .now()) == .success else { return }
+        lastPublished = finished
+        sequence &+= 1
+        let sample = TrackingSample(generation: generation, sequence: sequence, frame: frame,
+                                    pinchState: engine.state, gesture: gesture,
+                                    processingMilliseconds: (finished - now) * 1_000,
+                                    capturedAt: now - max(0, age))
+        Task { @MainActor [receive, deliverySlot] in
+            defer { deliverySlot.signal() }
+            receive(sample)
         }
-
-        let elapsedMilliseconds =
-            (ProcessInfo.processInfo.systemUptime - startTime) * 1_000
-
-        publish(
-            frame: frame,
-            processingMilliseconds: elapsedMilliseconds,
-            pinchState: pinchRecognizer.state
-        )
     }
 
     private func makeFrame(
@@ -163,23 +154,4 @@ final class HandTracker:
         )
     }
 
-    private func publish(
-        frame: HandFrame?,
-        processingMilliseconds: Double,
-        pinchState: PinchRecognizer.State
-    ) {
-        let confidentJointCount = frame?.landmarks.values.filter {
-            $0.confidence >= 0.5
-        }.count ?? 0
-
-        Task { @MainActor [state] in
-            state.update(
-                handDetected: frame != nil,
-                confidentJointCount: confidentJointCount,
-                processingMilliseconds: processingMilliseconds,
-                frame: frame,
-                pinchState: pinchState
-            )
-        }
-    }
 }
