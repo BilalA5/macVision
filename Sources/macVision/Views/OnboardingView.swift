@@ -3,13 +3,14 @@ import SwiftUI
 struct OnboardingView: View {
     let appState: AppState
     @State private var step = 0
+    @State private var practiceStarted = Date()
     @Environment(\.colorScheme) private var scheme
 
     private let titles = ["Meet your next shortcut.", "Let your hands do the talking.", "Find your rhythm.", "Make it yours."]
     private let subtitles = [
         "A few small gestures. A smoother way around your browser.",
         "macVision processes your camera on this Mac. Your video is never recorded or uploaded.",
-        "Open your thumb and index finger, pinch gently, then release. Actions stay off while you practice.",
+        "Choose a comfortable finger pair, pinch gently, then release. Actions stay off while you practice.",
         "Your browser shortcuts are ready. Start in practice mode, or allow Accessibility access to enable actions later."
     ]
 
@@ -50,7 +51,12 @@ struct OnboardingView: View {
                     case 1:
                         PermissionControls(appState: appState).padding(.horizontal, 8)
                     case 2:
-                        CameraStage(appState: appState).frame(height: 190)
+                        PinchFingerPicker(appState: appState)
+                        CameraStage(appState: appState).frame(height: 170)
+                        if appState.recentActivity.contains(where: { $0.date >= practiceStarted && $0.gesture == .pinch }) {
+                            Label("Pinch and release recognized", systemImage: "checkmark.circle.fill")
+                                .font(.caption).foregroundStyle(VisionStyle.green)
+                        }
                         Text(appState.handTracking.handDetected ? appState.handTracking.pinchStatusText : "Bring one hand into view")
                             .font(.system(size: 12, weight: .medium))
                         if !appState.isActive {
@@ -95,6 +101,8 @@ struct OnboardingView: View {
         .frame(width: 520, height: 560)
         .background(VisionStyle.canvas(scheme))
         .tint(VisionStyle.green)
+        .onChange(of: step) { _, value in if value == 2 { practiceStarted = Date() } }
+        .onChange(of: appState.settings.preferences.selectedFinger) { _, _ in practiceStarted = Date() }
         .onAppear { if appState.actionsEnabled { appState.setActionsEnabled(false) } }
     }
 
