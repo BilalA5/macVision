@@ -145,10 +145,17 @@ final class AppState {
         }
     }
 
+    func selectPinchFinger(_ finger: PinchFinger) {
+        setActionsEnabled(false)
+        calibration.cancel()
+        settings.selectFinger(finger)
+        restartRecognition()
+    }
+
     func beginCalibration(open: Bool) {
         guard isActive else { errorMessage = "Activate the camera before calibrating."; return }
         setActionsEnabled(false)
-        if open { calibration.beginOpen() } else { calibration.beginClosed() }
+        if open { calibration.beginOpen(finger: settings.preferences.selectedFinger) } else { calibration.beginClosed(finger: settings.preferences.selectedFinger) }
     }
 
     func resetCalibration() {

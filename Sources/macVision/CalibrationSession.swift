@@ -3,6 +3,7 @@ import Observation
 
 @MainActor @Observable
 final class CalibrationSession {
+    static let requiredSamples = 8
     enum Phase { case inactive, open, closed, complete }
     private(set) var phase: Phase = .inactive
     private(set) var sampleCount = 0
@@ -16,16 +17,16 @@ final class CalibrationSession {
 
     var isCollecting: Bool { phase == .open || phase == .closed }
 
-    func beginOpen() {
+    func beginOpen(finger: PinchFinger = .index) {
         openRatio = nil
         begin(.open)
-        message = "Hold your thumb and index comfortably apart, with your palm facing the camera."
+        message = "Hold your thumb and \(finger.title.lowercased()) comfortably apart, with your palm facing the camera."
     }
 
-    func beginClosed() {
+    func beginClosed(finger: PinchFinger = .index) {
         guard openRatio != nil else { return }
         begin(.closed)
-        message = "Touch your thumb and index finger together and hold still."
+        message = "Touch your thumb and \(finger.title.lowercased()) finger together and hold still."
     }
 
     private func begin(_ phase: Phase) {
@@ -37,21 +38,21 @@ final class CalibrationSession {
     }
 
     func cancel() {
+        openRatio = nil
         phase = .inactive
         samples = []
         sampleCount = 0
         message = "Calibration stopped. Your saved sensitivity has not changed."
     }
 
-    func consume(_ frame: HandFrame?, settings: GestureSettings) -> Bool {
+    func consume(_ frame: HandFrame?, settings: GestureSettings, now: Double = ProcessInfo.processInfo.systemUptime) -> Bool {
         guard isCollecting else { return false }
-        let now = ProcessInfo.processInfo.systemUptime
         guard now <= deadline else {
             cancel()
             message = "Could not collect a stable hand. Try better lighting and keep your whole hand visible."
             return false
         }
-        guard let frame, let measurement = PinchMeasurement(frame: frame) else {
+        guard let frame, let measurement = PinchMeasurement(frame: frame, finger: settings.preferences.selectedFinger) else {
             samples = []
             sampleCount = 0
             startedAt = nil
@@ -59,13 +60,13 @@ final class CalibrationSession {
         }
         if startedAt == nil { startedAt = now }
         // Give the user time to form the pose after pressing the button.
-        guard now - (startedAt ?? now) >= 1 else { return false }
+        guard now - (startedAt ?? now) >= 0.4 else { return false }
         samples.append(measurement.ratio)
         sampleCount = samples.count
-        guard samples.count >= 25 else { return false }
+        guard samples.count >= Self.requiredSamples else { return false }
         let ordered = samples.sorted()
         let median = ordered[ordered.count / 2]
-        guard ordered[22] - ordered[2] < 0.25 else {
+        guard ordered[ordered.count - 2] - ordered[1] < 0.25 else {
             samples = []
             sampleCount = 0
             message = "Hold steady; the pinch distance is varying too much."
