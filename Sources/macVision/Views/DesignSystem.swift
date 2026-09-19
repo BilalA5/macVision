@@ -3,9 +3,9 @@ import AppKit
 
 enum VisionStyle {
     static let green = Color(red: 0.25, green: 0.75, blue: 0.38)
-    static let radius: CGFloat = 12
+    static let radius: CGFloat = 14
     static let pagePadding: CGFloat = 28
-    static let sectionGap: CGFloat = 24
+    static let sectionGap: CGFloat = 22
     static let hairline = Color.primary.opacity(0.08)
     static let surface = Color.primary.opacity(0.035)
     static let muted = Color.secondary
@@ -27,12 +27,15 @@ struct GlassMaterial: NSViewRepresentable {
 }
 
 struct VisionPanel<Content: View>: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
     @ViewBuilder var content: Content
     var body: some View {
-        content.padding(16)
+        content.padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(VisionStyle.surface, in: RoundedRectangle(cornerRadius: VisionStyle.radius))
-            .overlay(RoundedRectangle(cornerRadius: VisionStyle.radius).strokeBorder(VisionStyle.hairline))
+            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.8), in: RoundedRectangle(cornerRadius: VisionStyle.radius))
+            .overlay(RoundedRectangle(cornerRadius: VisionStyle.radius).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.08)))
+            .shadow(color: .black.opacity(scheme == .dark ? 0.08 : 0.025), radius: 8, y: 3)
     }
 }
 
@@ -49,8 +52,8 @@ struct PaneHeading: View {
     let subtitle: String
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 23, weight: .semibold)).tracking(-0.5)
-            Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
+            Text(title).font(.system(size: 26, weight: .semibold)).tracking(-0.5)
+            Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true).lineSpacing(3)
         }
     }
@@ -90,11 +93,18 @@ struct Keycaps: View {
 struct PreferenceRow<Content: View>: View {
     let title: String
     var subtitle: String = ""
+    var symbol: String? = nil
     @ViewBuilder var content: Content
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 14) {
+            if let symbol {
+                Image(systemName: symbol).font(.system(size: 14))
+                    .foregroundStyle(.secondary).frame(width: 30, height: 30)
+                    .background(VisionStyle.surface, in: RoundedRectangle(cornerRadius: 8))
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 12, weight: .medium))
+                Text(title).font(.system(size: 13, weight: .medium))
                 if !subtitle.isEmpty {
                     Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -103,7 +113,7 @@ struct PreferenceRow<Content: View>: View {
             Spacer(minLength: 8)
             content
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, 7)
     }
 }
 

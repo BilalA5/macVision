@@ -23,9 +23,9 @@ struct MainWindowView: View {
                     }
                 }
                 .padding(VisionStyle.pagePadding)
-                .padding(.top, 16)
+                .padding(.top, 20)
                 .frame(maxWidth: 780, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
             .background(VisionStyle.canvas(scheme).opacity(opaque ? 1 : 0.94))
         }
@@ -61,9 +61,9 @@ struct MainWindowView: View {
     }
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 28) {
             HStack(spacing: 9) {
-                AppMark(size: 28)
+                AppMark(size: 30)
                 Text("mac\(Text("Vision").fontWeight(.semibold))")
                     .font(.system(size: 15)).tracking(-0.4)
             }
@@ -78,16 +78,17 @@ struct MainWindowView: View {
                             Image(systemName: section.symbol).font(.system(size: 14))
                                 .foregroundStyle(appState.selectedSection == section ? VisionStyle.green : .secondary)
                                 .frame(width: 18)
-                            Text(section == .practice ? "Practice" : section.title).font(.system(size: 12, weight: appState.selectedSection == section ? .medium : .regular))
+                            Text(section == .practice ? "Practice" : section.title).font(.system(size: 13, weight: appState.selectedSection == section ? .medium : .regular))
                             Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, 10).frame(height: 36)
+                        .padding(.horizontal, 10).frame(height: 38)
                         .contentShape(Rectangle())
-                        .background(appState.selectedSection == section ? Color.primary.opacity(0.08) : hoveredSection == section ? Color.primary.opacity(0.035) : .clear,
-                                    in: RoundedRectangle(cornerRadius: 7))
+                        .background(appState.selectedSection == section ? VisionStyle.green.opacity(0.10) : hoveredSection == section ? Color.primary.opacity(0.035) : .clear,
+                                    in: RoundedRectangle(cornerRadius: 9))
                     }
                     .buttonStyle(.plain)
                     .onHover { hoveredSection = $0 ? section : nil }
+                    .help(section.title)
                     .accessibilityLabel(section.title)
                     .accessibilityAddTraits(appState.selectedSection == section ? .isSelected : [])
                 }
@@ -106,7 +107,7 @@ struct MainWindowView: View {
             .padding(.horizontal, 10)
         }
         .padding(.horizontal, 10).padding(.top, 54).padding(.bottom, 20)
-        .frame(width: 196)
+        .frame(width: 204)
         .background {
             if opaque { VisionStyle.canvas(scheme) }
             else { GlassMaterial(material: .sidebar) }
