@@ -4,27 +4,26 @@ struct GesturesPane: View {
     let appState: AppState
     var body: some View {
         HStack(alignment: .top) {
-            PaneHeading(title: "Gestures", subtitle: "Small movements. Shortcuts that feel like yours.")
+            PaneHeading(title: "Gestures", subtitle: "Choose what each movement does.")
             Spacer()
             Button("Restore defaults", systemImage: "arrow.counterclockwise") {
                 appState.setActionsEnabled(false)
                 appState.settings.restoreBrowserBindings()
             }.controlSize(.small)
         }
+        VisionPanel {
         VStack(spacing: 0) {
             ForEach(GestureKind.allCases) { gesture in
                 GestureBindingRow(appState: appState, gesture: gesture)
                 if gesture != GestureKind.allCases.last { Divider().padding(.leading, 64) }
             }
         }
-        .padding(.horizontal, 16)
-        .background(VisionStyle.surface, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(VisionStyle.hairline))
+        }
         VStack(alignment: .leading, spacing: 10) {
             SectionCaption(title: "Where gestures work")
             VisionPanel {
                 VStack(spacing: 10) {
-                    PreferenceRow(title: "Browser-only mode", subtitle: "Only send shortcuts when a supported browser is frontmost.") {
+                    PreferenceRow(title: "Browser-only mode", subtitle: "Only send shortcuts when a supported browser is frontmost.", symbol: "globe") {
                         Toggle("Browser-only mode", isOn: Binding(
                             get: { appState.settings.preferences.browserOnly },
                             set: { appState.setActionsEnabled(false); appState.settings.setBrowserOnly($0) }
@@ -51,11 +50,12 @@ private struct GestureBindingRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: gesture.symbol).font(.system(size: 19, weight: .light))
-                .frame(width: 34, height: 38)
-                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
+            Image(systemName: gesture.symbol).font(.system(size: 17, weight: .regular))
+                .foregroundStyle(VisionStyle.green)
+                .frame(width: 36, height: 36)
+                .background(VisionStyle.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 5) {
-                Text(gesture.title).font(.system(size: 12, weight: .medium))
+                Text(gesture.title).font(.system(size: 13, weight: .medium))
                 Text(shortcut?.actionTitle ?? "No action assigned").font(.system(size: 11)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
@@ -64,6 +64,9 @@ private struct GestureBindingRow: View {
                 else { Text("Assign shortcut").font(.system(size: 11)).foregroundStyle(.secondary) }
             }
             .buttonStyle(.plain)
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+            .accessibilityLabel("Edit shortcut for \(gesture.title)")
             .help("Edit shortcut for \(gesture.title)")
             .popover(isPresented: $editing, arrowEdge: .trailing) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -94,7 +97,7 @@ private struct GestureBindingRow: View {
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .accessibilityLabel("Options for \(gesture.title)")
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
     }
 
     private func assign(_ shortcut: Shortcut?) {

@@ -5,7 +5,8 @@ struct OverviewPane: View {
     @State private var diagnosticsOpen = false
 
     var body: some View {
-        PaneHeading(title: "Overview", subtitle: "A little less reaching. A little more flow.")
+        PaneHeading(title: "Overview", subtitle: "Your shortcuts, a gesture away.")
+        VisionPanel {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 20) {
                 VStack(alignment: .leading, spacing: 9) {
@@ -28,18 +29,19 @@ struct OverviewPane: View {
                 .tint(appState.isActive ? .gray : VisionStyle.green)
             }
             HStack(spacing: 8) {
-                Text("From any app").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text("Activation shortcut").font(.system(size: 11)).foregroundStyle(.secondary)
                 Keycaps(keys: ["⌃", "⌥", "⌘", "G"])
                 if !appState.activationShortcutAvailable {
                     Text("Unavailable — use the menu bar").font(.caption).foregroundStyle(.orange)
                 }
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
+        }
 
         VisionPanel {
             VStack(alignment: .leading, spacing: 12) {
-                PreferenceRow(title: "Enable actions", subtitle: "Send your gesture shortcuts to the foreground app.") {
+                PreferenceRow(title: "Enable actions", subtitle: "Send your gesture shortcuts to the foreground app.", symbol: "cursorarrow.click") {
                     Toggle("Enable actions", isOn: Binding(get: { appState.actionsEnabled }, set: { appState.setActionsEnabled($0) }))
                         .labelsHidden().toggleStyle(.switch).controlSize(.small)
                         .disabled(!appState.isActive || !appState.accessibilityGranted)
@@ -69,11 +71,13 @@ struct OverviewPane: View {
                         Image(systemName: "hand.pinch").font(.system(size: 24, weight: .light)).foregroundStyle(.secondary)
                             .frame(width: 40)
                         VStack(alignment: .leading, spacing: 5) {
-                            Text("Your next move starts here").font(.system(size: 12, weight: .medium))
-                            Text("Activate, open your fingers, then try a pinch and release.")
-                                .font(.system(size: 11)).foregroundStyle(.secondary)
+                            Text("Ready for your first gesture").font(.system(size: 12, weight: .medium))
+                            Text("Activate the camera, then try a pinch and release in Practice.")
+                                .font(.system(size: 12)).foregroundStyle(.secondary)
+                            Button("Open practice") { appState.selectedSection = .practice }
+                                .controlSize(.small).padding(.top, 5)
                         }
-                    }.padding(.vertical, 12)
+                    }.padding(.vertical, 8)
                 }
             } else {
                 VisionPanel {
@@ -95,9 +99,9 @@ struct OverviewPane: View {
         }
 
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "sparkle").foregroundStyle(.secondary)
+            Image(systemName: "menubar.rectangle").foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 5) {
-                Text("Set it once. Keep your flow.").font(.system(size: 12, weight: .medium))
+                Text("Ready from your menu bar").font(.system(size: 12, weight: .medium))
                 Text("Your bindings and optional calibration stay saved. Close this window and macVision keeps working in the menu bar.")
                     .font(.system(size: 11)).foregroundStyle(.secondary).lineSpacing(3)
             }
