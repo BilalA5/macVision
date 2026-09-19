@@ -16,19 +16,21 @@ struct PracticePane: View {
 
     var body: some View {
         HStack(alignment: .top) {
-            PaneHeading(title: "Practice & Calibration", subtitle: "Find your rhythm. Your shortcuts stay paused here.")
+            PaneHeading(title: "Practice", subtitle: "Get comfortable. Actions stay paused here.")
             Spacer()
             Button(expanded ? "Circular view" : "Full preview", systemImage: expanded ? "circle" : "arrow.up.left.and.arrow.down.right") {
                 expanded.toggle()
             }.controlSize(.small)
         }
+        VisionPanel {
         VStack(spacing: 20) {
             CameraStage(appState: appState, circular: !expanded)
                 .frame(height: expanded ? 280 : 232)
             VStack(spacing: 8) {
                 Text(guidance).font(.system(size: 16, weight: .medium))
                 Text(appState.isActive ? "Open your fingers, pinch gently, then release." : appState.errorMessage ?? "Sit comfortably, then activate to see your hand landmarks.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 if !appState.isActive {
                     Button(appState.isStarting ? "Cancel" : "Activate camera", action: appState.toggleActivation)
                         .buttonStyle(.borderedProminent).padding(.top, 4)
@@ -41,7 +43,8 @@ struct PracticePane: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 8)
+        .frame(maxWidth: .infinity).padding(.vertical, 14)
+        }
         CalibrationCard(appState: appState)
         DisclosureGroup("Tracking details", isExpanded: $diagnostics) {
             HStack(spacing: 32) {
@@ -75,7 +78,7 @@ struct CameraStage: View {
             let width = circular ? min(geometry.size.height, 240) : geometry.size.width
             let shape = circular ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 12))
             ZStack {
-                Color(white: 0.075)
+                RadialGradient(colors: [Color(white: 0.13), Color(white: 0.055)], center: .topLeading, startRadius: 0, endRadius: 280)
                 if appState.isActive {
                     CameraPreview(camera: appState.camera, handFrame: appState.handTracking.latestFrame)
                 } else {
@@ -110,9 +113,9 @@ struct CalibrationCard: View {
         VisionPanel {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text("Make it feel natural").font(.system(size: 13, weight: .semibold))
+                    Text("Personal calibration").font(.system(size: 13, weight: .semibold))
                     Spacer()
-                    Text("OPTIONAL").font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundStyle(.tertiary)
+                    Text("OPTIONAL").font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundStyle(.secondary)
                 }
                 Text(appState.calibration.message).font(.system(size: 11)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true).lineSpacing(3)

@@ -22,6 +22,7 @@ struct OnboardingView: View {
                             .frame(width: index == step ? 20 : 6, height: 5)
                     }
                 }
+                Text("\(step + 1) of 4").font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary)
                 Spacer()
                 Button { appState.showsOnboarding = false } label: {
                     Image(systemName: "xmark").font(.system(size: 11, weight: .medium))
@@ -32,7 +33,7 @@ struct OnboardingView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     if step == 0 {
-                        AppMark(size: 76).padding(.top, 20)
+                        AppMark(size: 68).padding(.top, 8)
                     }
                     VStack(spacing: 10) {
                         Text(titles[step]).font(.system(size: 25, weight: .semibold)).tracking(-0.7)
@@ -41,11 +42,11 @@ struct OnboardingView: View {
                     }
                     switch step {
                     case 0:
-                        VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 10) {
                             benefit("hand.pinch", "Small, deliberate gestures", "Switch tabs, navigate pages, keep your flow.")
                             benefit("lock.shield", "Entirely on your Mac", "No account, no uploads, no camera recording.")
                             benefit("slider.horizontal.3", "Your shortcuts, your choice", "Adjust bindings once and keep them saved.")
-                        }.padding(.vertical, 12)
+                        }.padding(.vertical, 4)
                     case 1:
                         PermissionControls(appState: appState).padding(.horizontal, 8)
                     case 2:
@@ -99,11 +100,18 @@ struct OnboardingView: View {
 
     private func benefit(_ symbol: String, _ title: String, _ subtitle: String) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: symbol).font(.system(size: 18, weight: .light)).foregroundStyle(VisionStyle.green).frame(width: 28)
+            Image(systemName: symbol).font(.system(size: 17, weight: .regular)).foregroundStyle(VisionStyle.green)
+                .frame(width: 36, height: 36)
+                .background(VisionStyle.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 12, weight: .medium))
                 Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            Spacer(minLength: 0)
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(VisionStyle.surface, in: RoundedRectangle(cornerRadius: 12))
     }
 }
