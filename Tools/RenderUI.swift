@@ -28,6 +28,9 @@ struct RenderUI {
             }.background(VisionStyle.canvas(scheme)).environment(\.colorScheme, scheme)
             try render(preferences, size: NSSize(width: 630, height: 980), to: output.appendingPathComponent("preferences-full-\(mode).png"))
         }
+        try render(GestureGuide(gesture: .right, finger: .middle, reduceMotion: true)
+            .padding(24).frame(width: 380).background(VisionStyle.canvas(.dark)).environment(\.colorScheme, .dark),
+            size: NSSize(width: 380, height: 360), to: output.appendingPathComponent("skeletal-guide.png"))
         app.selectedSection = .gestures
         try render(MainWindowView(appState: app).environment(\.colorScheme, .dark), size: NSSize(width: 800, height: 600),
                    to: output.appendingPathComponent("minimum-window.png"))
