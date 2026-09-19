@@ -6,6 +6,7 @@ import QuartzCore
 struct CameraPreview: NSViewRepresentable {
     let camera: CameraManager
     let handFrame: HandFrame?
+    var finger: PinchFinger = .index
 
     func makeNSView(context: Context) -> CameraPreviewNSView {
         CameraPreviewNSView(
@@ -17,7 +18,7 @@ struct CameraPreview: NSViewRepresentable {
         _ nsView: CameraPreviewNSView,
         context: Context
     ) {
-        nsView.updateHandFrame(handFrame)
+        nsView.updateHandFrame(handFrame, finger: finger)
     }
 }
 
@@ -36,6 +37,7 @@ final class CameraPreviewNSView: NSView {
     ]
 
     private var handFrame: HandFrame?
+    private var finger: PinchFinger = .index
 
     override var isFlipped: Bool {
         true
@@ -67,7 +69,8 @@ final class CameraPreviewNSView: NSView {
         fatalError("This view is created in code.")
     }
 
-    func updateHandFrame(_ frame: HandFrame?) {
+    func updateHandFrame(_ frame: HandFrame?, finger: PinchFinger) {
+        self.finger = finger
         handFrame = frame
         redrawJoints()
     }
@@ -99,7 +102,7 @@ final class CameraPreviewNSView: NSView {
                 let capturePoint = CGPoint(x: CGFloat(landmark.x), y: CGFloat(1 - landmark.y))
                 let point = previewLayer.layerPointConverted(fromCaptureDevicePoint: capturePoint)
                 positions[joint] = point
-                let isTip = joint == .thumbTip || joint == .indexTip
+                let isTip = joint == .thumbTip || joint == finger.tip
                 let radius: CGFloat = isTip ? 3.5 : 2.5
                 let rect = CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2)
                 if isTip { tips.addEllipse(in: rect) } else { dots.addEllipse(in: rect) }

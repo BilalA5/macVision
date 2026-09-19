@@ -8,7 +8,7 @@ struct PracticePane: View {
     private var guidance: String {
         if !appState.isActive { return appState.isStarting ? "Starting camera…" : "Your camera is off" }
         if !appState.handTracking.handDetected { return "Bring one hand into view" }
-        if appState.handTracking.latestFrame.flatMap({ PinchMeasurement(frame: $0) }) == nil {
+        if appState.handTracking.latestFrame.flatMap({ PinchMeasurement(frame: $0, finger: appState.settings.preferences.selectedFinger) }) == nil {
             return "Keep your whole hand visible"
         }
         return appState.handTracking.pinchStatusText
@@ -45,11 +45,12 @@ struct PracticePane: View {
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         }
+        PinchFingerPicker(appState: appState)
         CalibrationCard(appState: appState)
         DisclosureGroup("Tracking details", isExpanded: $diagnostics) {
             HStack(spacing: 32) {
                 metric("Confident joints", "\(appState.handTracking.confidentJointCount)/21")
-                metric("Pinch ratio", appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0) }
+                metric("Pinch ratio", appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0, finger: appState.settings.preferences.selectedFinger) }
                     .map { String(format: "%.2f", $0.ratio) } ?? "—")
                 metric("Vision processing", String(format: "%.1f ms", appState.handTracking.processingMilliseconds))
             }.padding(.top, 12)
@@ -71,7 +72,7 @@ struct CameraStage: View {
     let appState: AppState
     var circular = true
     @Environment(\.colorScheme) private var scheme
-    private var tracking: Bool { appState.isActive && appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0) } != nil }
+    private var tracking: Bool { appState.isActive && appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0, finger: appState.settings.preferences.selectedFinger) } != nil }
 
     var body: some View {
         GeometryReader { geometry in
@@ -80,7 +81,7 @@ struct CameraStage: View {
             ZStack {
                 RadialGradient(colors: [Color(white: 0.13), Color(white: 0.055)], center: .topLeading, startRadius: 0, endRadius: 280)
                 if appState.isActive {
-                    CameraPreview(camera: appState.camera, handFrame: appState.handTracking.latestFrame)
+                    CameraPreview(camera: appState.camera, handFrame: appState.handTracking.latestFrame, finger: appState.settings.preferences.selectedFinger)
                 } else {
                     VStack(spacing: 12) {
                         Image(systemName: appState.isStarting ? "viewfinder" : "camera")
@@ -126,9 +127,9 @@ struct CalibrationCard: View {
                     Spacer()
                 }
                 if appState.calibration.isCollecting {
-                    ProgressView(value: Double(appState.calibration.sampleCount), total: 25).tint(VisionStyle.green)
+                    ProgressView(value: Double(appState.calibration.sampleCount), total: Double(CalibrationSession.requiredSamples)).tint(VisionStyle.green)
                     HStack {
-                        Text("Hold steady · \(appState.calibration.sampleCount)/25 samples").font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                        Text("Hold steady…").font(.caption).monospacedDigit().foregroundStyle(.secondary)
                         Spacer()
                         Button("Cancel", action: appState.calibration.cancel).controlSize(.small)
                     }
@@ -163,6 +164,22 @@ struct CalibrationCard: View {
                 else { Text(number).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary) }
             }
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct PinchFingerPicker: View {
+    let appState: AppState
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("Pinch thumb with", selection: Binding(
+                get: { appState.settings.preferences.selectedFinger },
+                set: { appState.selectPinchFinger($0) }
+            )) {
+                ForEach(PinchFinger.allCases) { finger in Text(finger.title).tag(finger) }
+            }.pickerStyle(.segmented)
+            Text("Saved for everyday use. Changing fingers resets sensitivity and pauses actions.")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 }
