@@ -9,21 +9,21 @@ struct PreferencesPane: View {
 
     var body: some View {
         @Bindable var appearance = appState.presentation
-        PaneHeading(title: "Settings", subtitle: "A utility that settles into your Mac.")
+        PaneHeading(title: "Settings", subtitle: "Make macVision work your way.")
         VStack(alignment: .leading, spacing: 10) {
             SectionCaption(title: "General")
             VisionPanel {
                 VStack(spacing: 10) {
-                    PreferenceRow(title: "Launch at login", subtitle: "Open macVision with the camera off.") {
+                    PreferenceRow(title: "Launch at login", subtitle: "Open macVision with the camera off.", symbol: "power") {
                         Toggle("Launch at login", isOn: Binding(get: { appearance.loginEnabled }, set: { appearance.setLoginEnabled($0) }))
                             .labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     Divider()
-                    PreferenceRow(title: "Global activation shortcut", subtitle: "Activate or stop capture from any app.") {
+                    PreferenceRow(title: "Global activation shortcut", subtitle: "Activate or stop capture from any app.", symbol: "keyboard") {
                         Keycaps(keys: ["⌃", "⌥", "⌘", "G"])
                     }
                     Divider()
-                    PreferenceRow(title: "First-run walkthrough") {
+                    PreferenceRow(title: "First-run walkthrough", symbol: "sparkles") {
                         Button("Show again") {
                             openWindow(id: "main")
                             appState.showsOnboarding = true
@@ -38,7 +38,7 @@ struct PreferencesPane: View {
             SectionCaption(title: "Appearance & feedback")
             VisionPanel {
                 VStack(spacing: 10) {
-                    PreferenceRow(title: "Appearance") {
+                    PreferenceRow(title: "Appearance", symbol: "circle.lefthalf.filled") {
                         Picker("Appearance", selection: $appearance.appearance) {
                             Text("System").tag("system")
                             Text("Light").tag("light")
@@ -46,15 +46,15 @@ struct PreferencesPane: View {
                         }.pickerStyle(.segmented).labelsHidden().frame(width: 200)
                     }
                     Divider()
-                    PreferenceRow(title: "Reduce transparency", subtitle: "Use solid surfaces for greater contrast.") {
+                    PreferenceRow(title: "Reduce transparency", subtitle: "Use solid surfaces for greater contrast.", symbol: "square.on.square") {
                         Toggle("Reduce transparency", isOn: $appearance.reduceTransparency).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     Divider()
-                    PreferenceRow(title: "Reduce motion", subtitle: "Also respects your macOS accessibility preference.") {
+                    PreferenceRow(title: "Reduce motion", subtitle: "Also respects your macOS accessibility preference.", symbol: "figure.walk") {
                         Toggle("Reduce motion", isOn: $appearance.reduceMotion).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     Divider()
-                    PreferenceRow(title: "Notch feedback", subtitle: "Brief gesture confirmations, without taking focus.") {
+                    PreferenceRow(title: "Notch feedback", subtitle: "Brief gesture confirmations, without taking focus.", symbol: "menubar.rectangle") {
                         Toggle("Notch feedback", isOn: $appearance.showHUD).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                 }
@@ -84,7 +84,7 @@ struct PermissionControls: View {
             SectionCaption(title: "Permissions")
             VisionPanel {
                 VStack(spacing: 12) {
-                    PreferenceRow(title: "Camera", subtitle: "For recognizing your hand. Frames are never saved.") {
+                    PreferenceRow(title: "Camera", subtitle: "For recognizing your hand. Frames are never saved.", symbol: "camera") {
                         if permission.status == .authorized {
                             Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.green)
                         } else {
@@ -95,7 +95,7 @@ struct PermissionControls: View {
                         }
                     }
                     Divider()
-                    PreferenceRow(title: "Accessibility", subtitle: "Only needed to send keyboard shortcuts.") {
+                    PreferenceRow(title: "Accessibility", subtitle: "Only needed to send keyboard shortcuts.", symbol: "accessibility") {
                         if appState.accessibilityGranted {
                             Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.green)
                         } else {
