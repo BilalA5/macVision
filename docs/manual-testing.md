@@ -51,3 +51,13 @@ Use Activity Monitor with the main window open and closed. Observe CPU, memory, 
 - Activate or complete a gesture on a notched MacBook and on an external display: the HUD text stays below hardware, does not steal focus, and dismisses.
 - Disable notch feedback: any visible HUD disappears and new gestures do not show it.
 - Try Launch at login from the bundled app. Respect any macOS approval step, and verify login launches with the camera off.
+
+### Polished notch feedback
+
+- Trigger an assigned gesture repeatedly: show actual shortcut keycaps, increment the count for identical successful actions, and keep the surface open. A different shortcut resets the count.
+- Trigger during the closing transition: reverse smoothly without snapping or letting the old dismissal hide the new message.
+- Check camera startup, denied permission, capture failure and practice: neutral/error feedback must not imply a shortcut was sent.
+- Check physical-notch center alignment, curved shoulders and mirrored left/right expansion. Move the cursor to another display; feedback stays at the notched display.
+- With Reduce Motion enabled, verify a short fade and no silhouette expansion or content translation.
+- Test a display without a notch: centered floating pill, no empty cutout area.
+- Run `./scripts/render-ui.sh` for static HUD states. These previews validate layout, not live animation timing or hardware placement.

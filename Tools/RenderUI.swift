@@ -33,8 +33,21 @@ struct RenderUI {
                    to: output.appendingPathComponent("minimum-window.png"))
         let hud = HUDVisualState()
         hud.expanded = true
-        hud.message = HUDMessage(text: "Next tab", symbol: "hand.pinch")
+        hud.message = HUDMessage(text: "Next tab", symbol: "checkmark", tone: .success,
+                                 keycaps: ["⌃", "⇥"], detail: "Shortcut sent", isAction: true)
+        hud.repeatCount = 3
         try render(StatusHUDView(state: hud).background(Color(white: 0.2)), size: NSSize(width: 400, height: 100), to: output.appendingPathComponent("notch-hud.png"))
+        for variant in ["collapsed", "permission", "pill", "reduced"] {
+            hud.expanded = variant != "collapsed"
+            hud.hasNotch = variant != "pill"
+            hud.reduceMotion = variant == "reduced"
+            hud.repeatCount = 1
+            hud.message = variant == "permission"
+                ? HUDMessage(text: "Camera permission required", symbol: "lock", tone: .error, detail: "Allow access in System Settings")
+                : HUDMessage(text: "Ready to practice", symbol: "hand.pinch", detail: "Actions paused")
+            try render(StatusHUDView(state: hud).background(Color(white: 0.2)), size: NSSize(width: 400, height: 110),
+                       to: output.appendingPathComponent("notch-\(variant).png"))
+        }
     }
 
     @MainActor static func render<V: View>(_ view: V, size: NSSize, to url: URL) throws {
