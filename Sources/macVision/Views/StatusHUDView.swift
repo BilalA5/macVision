@@ -65,8 +65,8 @@ struct StatusHUDView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            surface.fill(.black)
-            surface.stroke(LinearGradient(colors: [.clear, .white.opacity(0.10)], startPoint: .top, endPoint: .bottom), lineWidth: 0.5)
+            // Opaque black, without a rim or material, blends into the hardware cutout.
+            surface.fill(Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 1))
             HStack(spacing: 12) {
                 Image(systemName: state.message.symbol)
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
