@@ -18,6 +18,7 @@ struct TestRunner {
         try invalidCalibrationDoesNotReplaceSettings()
         try corruptPreferencesFallBackWithoutCrashing()
         staleSessionAndOutOfOrderResultsAreRejected()
-        print("Passed 11 gesture, settings and delivery tests.")
+        try fingerSelectionAndShortCalibration()
+        print("Passed 12 gesture, settings and delivery tests.")
     }
 }
