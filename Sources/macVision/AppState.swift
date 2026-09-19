@@ -74,6 +74,7 @@ final class AppState {
         generation = UUID()
         let token = generation
         isStarting = true
+        hudMessage = HUDMessage(text: "Starting camera…", symbol: "camera", detail: "Preparing hand tracking")
         errorMessage = nil
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -84,18 +85,23 @@ final class AppState {
             guard self.generation == token, self.isStarting else { return }
             guard authorized else {
                 self.isStarting = false
+                self.hudMessage = HUDMessage(text: "Camera permission required", symbol: "lock", tone: .error, detail: "Allow access in System Settings")
                 self.errorMessage = "Allow camera access in System Settings → Privacy & Security → Camera."
                 return
             }
             self.camera.start(generation: token, preferences: self.settings.preferences) { [weak self] token, error in
                 guard let self, self.generation == token else { return }
                 self.isStarting = false
-                if let error { self.errorMessage = error; return }
+                if let error {
+                    self.errorMessage = error
+                    self.hudMessage = HUDMessage(text: "Camera unavailable", symbol: "exclamationmark.triangle", tone: .error, detail: "Open macVision to review camera setup")
+                    return
+                }
                 self.deliveryGate = TrackingDeliveryGate()
                 self.lastSampleAt = ProcessInfo.processInfo.systemUptime
                 self.handTracking.setEnabled(true)
                 self.isActive = true
-                self.hudMessage = HUDMessage(text: "Ready to practice", symbol: "hand.pinch")
+                self.hudMessage = HUDMessage(text: "Ready to practice", symbol: "hand.pinch", detail: "Actions paused")
             }
         }
     }
@@ -169,11 +175,17 @@ final class AppState {
         }
         guard let gesture = sample.gesture else { return }
         lastGestureText = gesture.title
+        var sentShortcut: Shortcut?
         defer {
             recentActivity.insert(GestureActivity(gesture: gesture, detail: lastActionText), at: 0)
             recentActivity = Array(recentActivity.prefix(4))
-            hudMessage = HUDMessage(text: lastActionText.hasPrefix("Sent") ? (settings.preferences.bindings[gesture.rawValue]?.actionTitle ?? gesture.title) : lastActionText,
-                                    symbol: gesture.symbol, tone: lastActionText.hasPrefix("Sent ") ? .success : actionsEnabled ? .error : .neutral)
+            if let shortcut = sentShortcut {
+                hudMessage = HUDMessage(text: shortcut.actionTitle, symbol: "checkmark", tone: .success,
+                                        keycaps: shortcut.keycaps, detail: "Shortcut sent", isAction: true)
+            } else {
+                hudMessage = HUDMessage(text: lastActionText, symbol: gesture.symbol,
+                                        tone: actionsEnabled ? .error : .neutral)
+            }
         }
         guard actionsEnabled else { lastActionText = "Practice: \(gesture.title)"; return }
         guard let shortcut = settings.preferences.bindings[gesture.rawValue] else {
@@ -189,6 +201,7 @@ final class AppState {
         if let error = executor.execute(shortcut, browserOnly: settings.preferences.browserOnly) {
             lastActionText = error
         } else {
+            sentShortcut = shortcut
             lastActionText = "Sent \(shortcut.displayName)"
         }
     }

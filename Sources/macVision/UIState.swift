@@ -33,5 +33,8 @@ struct HUDMessage: Equatable {
     let id = UUID()
     let text: String
     let symbol: String
-    var tone: Tone = .success
+    var tone: Tone = .neutral
+    var keycaps: [String] = []
+    var detail: String? = nil
+    var isAction = false
 }
