@@ -21,6 +21,10 @@ final class HUDController {
         state.notchHeight = top
         state.notchWidth = notchWidth
         state.reduceMotion = preferences.reduceMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let repeats = panel?.isVisible == true && state.expanded && message.isAction
+            && state.message.isAction && state.message.text == message.text
+            && state.message.keycaps == message.keycaps
+        state.repeatCount = repeats ? state.repeatCount + 1 : 1
         state.message = message
 
         let hud: NSPanel
@@ -38,9 +42,12 @@ final class HUDController {
             panel = hud
         }
         let width = max(400, notchWidth + 80)
-        let height = (state.hasNotch ? top : 0) + 60
+        let height = (state.hasNotch ? top : 0) + 72
+        let centerX = screen.auxiliaryTopLeftArea.flatMap { left in
+            screen.auxiliaryTopRightArea.map { right in (left.maxX + right.minX) / 2 }
+        } ?? screen.frame.midX
         let y = state.hasNotch ? screen.frame.maxY - height : screen.visibleFrame.maxY - height - 8
-        hud.setFrame(NSRect(x: screen.frame.midX - width / 2, y: y, width: width, height: height), display: true)
+        hud.setFrame(NSRect(x: centerX - width / 2, y: y, width: width, height: height), display: true)
         let wasVisible = hud.isVisible
         if !wasVisible {
             var transaction = Transaction()
@@ -58,7 +65,7 @@ final class HUDController {
                 try await Task.sleep(for: .seconds(1.8))
                 guard let self else { return }
                 self.state.expanded = false
-                try await Task.sleep(for: .milliseconds(300))
+                try await Task.sleep(for: .milliseconds(220))
                 self.panel?.orderOut(nil)
             } catch { }
         }
