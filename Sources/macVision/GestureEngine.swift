@@ -2,6 +2,7 @@ import Foundation
 
 /// A completed gesture is emitted only on deliberate release. Loss of tracking cancels it.
 struct GestureEngine: Sendable {
+    private let finger: PinchFinger
     private var pinch: PinchRecognizer
     private var origin: (x: Double, y: Double, scale: Double, time: Double)?
     private var previousWrist: (x: Double, y: Double)?
@@ -9,7 +10,8 @@ struct GestureEngine: Sendable {
     private var lastGestureTime = -Double.infinity
     private(set) var state: PinchRecognizer.State = .waitingForRelease
 
-    init(closeThreshold: Double = 0.25, openThreshold: Double = 0.40) {
+    init(closeThreshold: Double = 0.25, openThreshold: Double = 0.40, finger: PinchFinger = .index) {
+        self.finger = finger
         pinch = PinchRecognizer(closeThreshold: closeThreshold, openThreshold: openThreshold)
     }
 
@@ -22,7 +24,7 @@ struct GestureEngine: Sendable {
     }
 
     mutating func update(frame: HandFrame?, timestamp: Double) -> GestureKind? {
-        guard let frame, let measurement = PinchMeasurement(frame: frame),
+        guard let frame, let measurement = PinchMeasurement(frame: frame, finger: finger),
               let wrist = frame.reliableLandmark(.wrist, minimumConfidence: 0.6),
               let base = frame.reliableLandmark(.middleMCP, minimumConfidence: 0.6) else {
             reset()

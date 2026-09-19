@@ -35,7 +35,7 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
         processingQueue.async { [self] in
             self.generation = generation
             engine = GestureEngine(closeThreshold: preferences.closeThreshold,
-                                   openThreshold: preferences.openThreshold)
+                                   openThreshold: preferences.openThreshold, finger: preferences.selectedFinger)
             lastProcessed = -.infinity
             lastPublished = -.infinity
         }
