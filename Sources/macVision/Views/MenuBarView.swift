@@ -3,51 +3,106 @@ import AppKit
 
 struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
-    let appState: AppState
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    let appState: AppState
     @State private var hoveredItem: String?
 
+    private var canEnableActions: Bool {
+        appState.isActive && appState.accessibilityGranted && !appState.showsOnboarding && !appState.calibration.isCollecting
+    }
+    private var actionHint: String {
+        if appState.actionsEnabled { return "Shortcuts are ready" }
+        if !appState.isActive { return "Activate the camera first" }
+        if !appState.accessibilityGranted { return "Accessibility access required" }
+        if appState.showsOnboarding || appState.calibration.isCollecting { return "Paused during setup" }
+        return "Practice without sending shortcuts"
+    }
+    private var powerTitle: String {
+        appState.isStarting ? "Cancel" : appState.isActive ? "Deactivate" : "Activate"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                AppMark(size: 30)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("macVision").font(.system(size: 13, weight: .semibold))
-                    HStack(spacing: 5) {
-                        Circle().fill(appState.isActive ? VisionStyle.green : Color.secondary).frame(width: 5, height: 5)
-                        Text(appState.modeTitle).font(.system(size: 11)).foregroundStyle(.secondary)
-                    }
-                }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 9) {
+                AppMark(size: 26)
+                Text("macVision").font(.system(size: 14, weight: .semibold)).tracking(-0.3)
                 Spacer()
-                Button(action: appState.toggleActivation) {
-                    Image(systemName: "power").font(.system(size: 14)).frame(width: 28, height: 28)
-                }.buttonStyle(.bordered).help(appState.isStarting ? "Cancel camera startup" : appState.isActive ? "Deactivate" : "Activate")
-                    .accessibilityLabel(appState.isStarting ? "Cancel camera startup" : appState.isActive ? "Deactivate macVision" : "Activate macVision")
-            }.padding(16)
-            Divider()
-            VStack(spacing: 2) {
-                menuItem(appState.actionsEnabled ? "Pause actions" : "Enable actions", symbol: appState.actionsEnabled ? "pause" : "checkmark") {
-                    appState.setActionsEnabled(!appState.actionsEnabled)
-                }.disabled(!appState.isActive || !appState.accessibilityGranted || appState.showsOnboarding || appState.calibration.isCollecting)
-                if appState.isActive && !appState.accessibilityGranted {
-                    menuItem("Allow Accessibility access", symbol: "lock.open") { appState.requestAccessibility() }
+                HStack(spacing: 5) {
+                    Circle().fill(appState.isActive ? VisionStyle.green : Color.secondary).frame(width: 5, height: 5)
+                    Text(appState.modeTitle).font(.system(size: 10, weight: .medium))
                 }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .background(VisionStyle.surface, in: Capsule())
+                .accessibilityElement(children: .combine)
+            }
+            .padding(.horizontal, 4).padding(.top, 4)
+
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(appState.isStarting ? "Connecting camera" : appState.isActive ? "Camera running" : "Ready when you are")
+                            .font(.system(size: 12, weight: .medium))
+                        Text(appState.isActive ? "Processing on this Mac" : "Start with a simple gesture")
+                            .font(.system(size: 10)).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Button(action: appState.toggleActivation) {
+                        Label(powerTitle, systemImage: "power")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .buttonStyle(.bordered).controlSize(.regular)
+                    .tint(appState.isActive ? Color.secondary : VisionStyle.green)
+                    .accessibilityLabel("\(powerTitle) macVision")
+                }
+                Rectangle().fill(VisionStyle.hairline).frame(height: 1)
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Gesture actions").font(.system(size: 12, weight: .medium))
+                        Text(actionHint).font(.system(size: 10)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                    Toggle("Gesture actions", isOn: Binding(get: { appState.actionsEnabled }, set: { appState.setActionsEnabled($0) }))
+                        .toggleStyle(.switch).controlSize(.mini).labelsHidden()
+                        .disabled(!appState.actionsEnabled && !canEnableActions)
+                        .help(actionHint)
+                }
+                if appState.isActive && !appState.accessibilityGranted {
+                    Button("Allow Accessibility access", action: appState.requestAccessibility)
+                        .controlSize(.small).frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(12)
+            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.07)))
+
+            VStack(spacing: 2) {
                 menuItem("Open macVision", symbol: "macwindow") { open(.overview) }
                 menuItem("Practice & calibration", symbol: "viewfinder") { open(.practice) }
                 menuItem("Settings", symbol: "slider.horizontal.3") { open(.settings) }
-            }.padding(8)
-            Divider()
-            HStack {
-                Keycaps(keys: ["⌃", "⌥", "⌘", "G"])
+            }
+
+            HStack(spacing: 6) {
+                Text("Activate").font(.system(size: 10)).foregroundStyle(.secondary)
+                Text("⌃ ⌥ ⌘ G").font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Control Option Command G")
                 Spacer()
-                Button("Quit") { appState.deactivate(); NSApplication.shared.terminate(nil) }
-                    .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(.secondary)
-                    .padding(.horizontal, 8).padding(.vertical, 5).contentShape(Rectangle())
-            }.padding(12)
+                Button { appState.deactivate(); NSApplication.shared.terminate(nil) } label: {
+                    Text("Quit").font(.system(size: 11)).foregroundStyle(.secondary)
+                        .padding(.horizontal, 8).padding(.vertical, 6).contentShape(Rectangle())
+                }.buttonStyle(.plain).help("Quit macVision")
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 8)
+            .overlay(alignment: .top) { Rectangle().fill(VisionStyle.hairline).frame(height: 1) }
         }
-        .frame(width: 270)
-        .background(VisionStyle.canvas(scheme).opacity(systemReduceTransparency || appState.presentation.reduceTransparency ? 1 : 0.88))
+        .padding(12)
+        .frame(width: 300)
+        .background(VisionStyle.canvas(scheme).opacity(systemReduceTransparency || appState.presentation.reduceTransparency ? 1 : 0.94))
         .tint(VisionStyle.green)
         .preferredColorScheme(appState.presentation.colorScheme)
     }
@@ -55,13 +110,16 @@ struct MenuBarView: View {
     private func menuItem(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: symbol).frame(width: 18).foregroundStyle(.secondary)
-                Text(title).font(.system(size: 13))
+                Image(systemName: symbol).font(.system(size: 13)).frame(width: 18).foregroundStyle(.secondary)
+                Text(title).font(.system(size: 12, weight: .medium))
                 Spacer()
-            }.padding(.horizontal, 8).frame(height: 34).contentShape(Rectangle())
-                .background(hoveredItem == title ? Color.primary.opacity(0.07) : .clear, in: RoundedRectangle(cornerRadius: 6))
-        }.buttonStyle(.plain)
-            .onHover { hoveredItem = $0 ? title : nil }
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 9).frame(height: 33).contentShape(Rectangle())
+            .background(hoveredItem == title ? Color.primary.opacity(0.06) : .clear, in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .onHover { hoveredItem = $0 ? title : nil }
     }
 
     private func open(_ section: AppSection) {
