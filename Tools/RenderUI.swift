@@ -21,7 +21,7 @@ struct RenderUI {
             }
             try render(OnboardingView(appState: app).environment(\.colorScheme, scheme), size: NSSize(width: 520, height: 560),
                        to: output.appendingPathComponent("onboarding-\(mode).png"))
-            try render(MenuBarView(appState: app).environment(\.colorScheme, scheme), size: NSSize(width: 270, height: 265),
+            try render(MenuBarView(appState: app).environment(\.colorScheme, scheme), size: NSSize(width: 270, height: 290),
                        to: output.appendingPathComponent("menu-\(mode).png"))
             let preferences = ScrollView {
                 VStack(alignment: .leading, spacing: 24) { PreferencesPane(appState: app) }.padding(28)
