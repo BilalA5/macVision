@@ -34,7 +34,8 @@ struct OnboardingView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     if step == 0 {
-                        AppMark(size: 68).padding(.top, 8)
+                        SkeletalHand(closure: 0.5, finger: appState.settings.preferences.selectedFinger)
+                            .frame(height: 116).padding(.top, 8)
                     }
                     VStack(spacing: 10) {
                         Text(titles[step]).font(.system(size: 25, weight: .semibold)).tracking(-0.7)
@@ -52,6 +53,10 @@ struct OnboardingView: View {
                         PermissionControls(appState: appState).padding(.horizontal, 8)
                     case 2:
                         PinchFingerPicker(appState: appState)
+                        DisclosureGroup("See how to pinch") {
+                            GestureGuide(gesture: .pinch, finger: appState.settings.preferences.selectedFinger,
+                                         reduceMotion: appState.presentation.reduceMotion).padding(.top, 12)
+                        }.font(.caption)
                         CameraStage(appState: appState).frame(height: 170)
                         if appState.recentActivity.contains(where: { $0.date >= practiceStarted && $0.gesture == .pinch }) {
                             Label("Pinch and release recognized", systemImage: "checkmark.circle.fill")

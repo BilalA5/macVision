@@ -46,6 +46,7 @@ private struct GestureBindingRow: View {
     let appState: AppState
     let gesture: GestureKind
     @State private var editing = false
+    @State private var showingGuide = false
     private var shortcut: Shortcut? { appState.settings.preferences.bindings[gesture.rawValue] }
 
     var body: some View {
@@ -59,6 +60,29 @@ private struct GestureBindingRow: View {
                 Text(shortcut?.actionTitle ?? "No action assigned").font(.system(size: 11)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
+            Button { appState.setActionsEnabled(false); showingGuide = true } label: {
+                Image(systemName: "play.circle").font(.system(size: 16))
+                    .frame(width: 32, height: 36).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).foregroundStyle(.secondary)
+            .help("Learn \(gesture.title)")
+            .accessibilityLabel("Learn \(gesture.title)")
+            .sheet(isPresented: $showingGuide) {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack {
+                        Text(gesture.title).font(.headline)
+                        Spacer()
+                        Button("Done") { showingGuide = false }.keyboardShortcut(.cancelAction)
+                    }
+                    GestureGuide(gesture: gesture, finger: appState.settings.preferences.selectedFinger,
+                                 reduceMotion: appState.presentation.reduceMotion)
+                    if let shortcut {
+                        HStack { Text(shortcut.actionTitle).font(.caption); Spacer(); Keycaps(keys: shortcut.keycaps) }
+                    }
+                    Button("Try in Practice") { showingGuide = false; appState.selectedSection = .practice }
+                        .buttonStyle(.borderedProminent)
+                }.padding(24).frame(width: 380)
+            }
             Button { editing = true } label: {
                 if let shortcut { Keycaps(keys: shortcut.keycaps) }
                 else { Text("Assign shortcut").font(.system(size: 11)).foregroundStyle(.secondary) }

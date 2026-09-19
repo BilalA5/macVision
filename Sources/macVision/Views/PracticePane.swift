@@ -46,6 +46,10 @@ struct PracticePane: View {
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         }
         PinchFingerPicker(appState: appState)
+        DisclosureGroup("Learn the movement") {
+            GestureGuide(gesture: .pinch, finger: appState.settings.preferences.selectedFinger,
+                         reduceMotion: appState.presentation.reduceMotion).padding(.top, 12)
+        }.font(.caption)
         CalibrationCard(appState: appState)
         DisclosureGroup("Tracking details", isExpanded: $diagnostics) {
             HStack(spacing: 32) {
