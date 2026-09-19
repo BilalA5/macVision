@@ -1,3 +1,12 @@
+enum PinchFinger: String, Codable, CaseIterable, Sendable, Identifiable {
+    case index, middle, ring, little
+    var id: String { rawValue }
+    var title: String { self == .little ? "Pinky" : rawValue.capitalized }
+    var tip: HandJoint {
+        switch self { case .index: .indexTip; case .middle: .middleTip; case .ring: .ringTip; case .little: .littleTip }
+    }
+}
+
 enum HandJoint: String, CaseIterable, Sendable {
     case wrist
 

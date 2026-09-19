@@ -44,6 +44,8 @@ struct GesturePreferences: Codable, Sendable {
     ]
     var closeThreshold = 0.25
     var openThreshold = 0.40
+    var pinchFinger: PinchFinger? = nil
+    var selectedFinger: PinchFinger { pinchFinger ?? .index }
     var hasCalibration = false
     var onboardingComplete = false
 
@@ -100,6 +102,12 @@ final class GestureSettings {
         preferences.hasCalibration = true
         save()
         return true
+    }
+
+    func selectFinger(_ finger: PinchFinger) {
+        guard preferences.selectedFinger != finger else { return }
+        preferences.pinchFinger = finger
+        resetCalibration()
     }
 
     func resetCalibration() {

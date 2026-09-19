@@ -3,11 +3,11 @@ import Foundation
 struct PinchMeasurement: Sendable {
     let ratio: Double
 
-    init?(frame: HandFrame) {
+    init?(frame: HandFrame, finger: PinchFinger = .index) {
         guard frame.imageWidth > 0,
               frame.imageHeight > 0,
               let thumb = frame.reliableLandmark(.thumbTip, minimumConfidence: 0.6),
-              let index = frame.reliableLandmark(.indexTip, minimumConfidence: 0.6),
+              let index = frame.reliableLandmark(finger.tip, minimumConfidence: 0.6),
               let wrist = frame.reliableLandmark(.wrist, minimumConfidence: 0.6),
               let middleBase = frame.reliableLandmark(.middleMCP, minimumConfidence: 0.6) else {
             return nil
