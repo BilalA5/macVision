@@ -11,7 +11,7 @@ struct PracticePane: View {
         if appState.handTracking.latestFrame.flatMap({ PinchMeasurement(frame: $0, finger: appState.settings.preferences.selectedFinger) }) == nil {
             return "Keep your whole hand visible"
         }
-        return appState.handTracking.pinchStatusText
+        return appState.trackingFeedbackText
     }
 
     var body: some View {

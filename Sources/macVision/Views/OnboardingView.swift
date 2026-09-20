@@ -62,7 +62,7 @@ struct OnboardingView: View {
                             Label("Pinch and release recognized", systemImage: "checkmark.circle.fill")
                                 .font(.caption).foregroundStyle(VisionStyle.green)
                         }
-                        Text(appState.handTracking.handDetected ? appState.handTracking.pinchStatusText : "Bring one hand into view")
+                        Text(appState.trackingFeedbackText)
                             .font(.system(size: 12, weight: .medium))
                         if !appState.isActive {
                             Button(appState.isStarting ? "Cancel" : "Activate camera", action: appState.toggleActivation)

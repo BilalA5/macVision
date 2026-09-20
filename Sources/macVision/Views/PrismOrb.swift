@@ -97,6 +97,8 @@ struct PrismOrb: View {
                 }
             }
         }
+        .saturation(active ? 1 : 0)
+        .opacity(active ? 1 : 0.55)
         .background(WindowVisibility { visible = $0 }.frame(width: 0, height: 0))
         .aspectRatio(1, contentMode: .fit)
         .accessibilityHidden(true)
