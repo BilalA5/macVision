@@ -135,7 +135,7 @@ struct CalibrationCard: View {
                     HStack {
                         Text("Hold steady…").font(.caption).monospacedDigit().foregroundStyle(.secondary)
                         Spacer()
-                        Button("Cancel", action: appState.calibration.cancel).controlSize(.small)
+                        Button("Cancel", action: appState.cancelCalibration).controlSize(.small)
                     }
                 } else {
                     HStack {

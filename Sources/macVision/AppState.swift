@@ -96,7 +96,7 @@ final class AppState {
         generation = UUID()
         let token = generation
         isStarting = true
-        hudMessage = HUDMessage(text: "Starting camera…", symbol: "camera", detail: "Preparing hand tracking")
+        hudMessage = HUDMessage(text: "Starting camera…", symbol: "camera", detail: "Preparing hand tracking", isPersistent: true)
         errorMessage = nil
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -154,7 +154,16 @@ final class AppState {
         restartRecognition()
     }
 
-    func refreshPermissions() { accessibilityGranted = executor.hasPermission }
+    func refreshPermissions() {
+        accessibilityGranted = executor.hasPermission
+        if actionsEnabled && !accessibilityGranted {
+            actionsEnabled = false
+            lastActionText = "Accessibility access was removed. Actions are off."
+            hudMessage = HUDMessage(text: "Actions paused", symbol: "lock", tone: .error,
+                                    detail: "Accessibility access is required")
+            restartRecognition()
+        }
+    }
     func requestAccessibility() { executor.requestPermission(); refreshPermissions() }
 
     func restartRecognition() {
@@ -178,6 +187,32 @@ final class AppState {
         guard isActive else { errorMessage = "Activate the camera before calibrating."; return }
         setActionsEnabled(false)
         if open { calibration.beginOpen(finger: settings.preferences.selectedFinger) } else { calibration.beginClosed(finger: settings.preferences.selectedFinger) }
+        presentCalibrationFeedback()
+    }
+
+    func cancelCalibration() {
+        calibration.cancel()
+        if isActive { presentCalibrationFeedback() }
+    }
+
+    private func presentCalibrationFeedback() {
+        guard isActive else { return }
+        if calibration.isCollecting {
+            let finger = settings.preferences.selectedFinger.title.lowercased()
+            hudMessage = HUDMessage(
+                text: calibration.phase == .open ? "Open thumb + \(finger)" : "Hold thumb + \(finger) pinch",
+                symbol: "hand.pinch",
+                detail: hasUsableHand ? calibration.message : "Bring one hand fully into view",
+                progress: Double(calibration.sampleCount) / Double(CalibrationSession.requiredSamples))
+        } else if calibration.phase == .complete {
+            hudMessage = HUDMessage(text: "Sensitivity saved", symbol: "checkmark", tone: .success,
+                                    detail: "Ready for your next session")
+        } else if calibration.canCaptureClosed {
+            hudMessage = HUDMessage(text: "Open pose captured", symbol: "checkmark", tone: .success,
+                                    detail: "Choose Capture closed pinch to continue")
+        } else {
+            hudMessage = HUDMessage(text: "Calibration stopped", symbol: "hand.pinch", detail: calibration.message)
+        }
     }
 
     func resetCalibration() {
@@ -192,6 +227,7 @@ final class AppState {
             capturedAt: sample.capturedAt, now: ProcessInfo.processInfo.systemUptime
         ) else { return }
         lastSampleAt = ProcessInfo.processInfo.systemUptime
+        let previouslyUsable = hasUsableHand
         handTracking.update(
             handDetected: sample.frame != nil,
             confidentJointCount: sample.frame?.landmarks.values.filter { $0.confidence >= 0.5 }.count ?? 0,
@@ -199,11 +235,17 @@ final class AppState {
             frame: sample.frame, pinchState: sample.pinchState
         )
         if calibration.isCollecting {
-            if calibration.consume(sample.frame, settings: settings) { restartRecognition() }
+            let before = (calibration.phase, calibration.sampleCount, calibration.message)
+            let saved = calibration.consume(sample.frame, settings: settings)
+            if before != (calibration.phase, calibration.sampleCount, calibration.message) || previouslyUsable != hasUsableHand {
+                presentCalibrationFeedback()
+            }
+            if saved { restartRecognition() }
             return
         }
         guard let gesture = sample.gesture else { return }
         lastGestureText = gesture.title
+        let attemptedAction = actionsEnabled
         var sentShortcut: Shortcut?
         defer {
             recentActivity.insert(GestureActivity(gesture: gesture, detail: lastActionText), at: 0)
@@ -213,7 +255,7 @@ final class AppState {
                                         keycaps: shortcut.keycaps, detail: "Shortcut sent", isAction: true)
             } else {
                 hudMessage = HUDMessage(text: lastActionText, symbol: gesture.symbol,
-                                        tone: actionsEnabled ? .error : .neutral)
+                                        tone: attemptedAction ? .error : .neutral)
             }
         }
         guard actionsEnabled else { lastActionText = "Practice: \(gesture.title)"; return }
@@ -244,6 +286,7 @@ final class AppState {
 
     private func checkCaptureHealth() {
         guard isActive else { return }
+        refreshPermissions()
         if AVCaptureDevice.authorizationStatus(for: .video) != .authorized {
             captureFailed(token: generation, message: "Camera access was removed.")
         } else if ProcessInfo.processInfo.systemUptime - lastSampleAt > 3 {

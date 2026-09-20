@@ -23,8 +23,6 @@ struct macVisionApp: App {
                 .onChange(of: appState.isGestureEngaged) { _, _ in updateGlow() }
                 .onChange(of: appState.presentation.reduceMotion) { _, _ in updateGlow() }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in updateGlow() }
-                .onChange(of: appState.calibration.sampleCount) { _, _ in presentCalibration() }
-                .onChange(of: appState.calibration.phase) { _, _ in presentCalibration() }
                 .onChange(of: appState.hudMessage) { _, message in
                     if let message { hudController.show(message, preferences: appState.presentation) }
                 }
@@ -40,21 +38,6 @@ struct macVisionApp: App {
         glowController.update(enabled: appState.showsControlGlow,
                               reduceMotion: appState.presentation.reduceMotion,
                               engaged: appState.isGestureEngaged)
-    }
-
-    private func presentCalibration() {
-        let calibration = appState.calibration
-        let message: HUDMessage
-        if calibration.isCollecting {
-            message = HUDMessage(text: calibration.phase == .open ? "Open your fingers" : "Hold a gentle pinch",
-                                 symbol: "hand.pinch", detail: "Calibrating · hold steady",
-                                 progress: Double(calibration.sampleCount) / Double(CalibrationSession.requiredSamples))
-        } else {
-            message = HUDMessage(text: calibration.phase == .complete ? "Sensitivity saved" : "Calibration",
-                                 symbol: calibration.phase == .complete ? "checkmark" : "hand.pinch",
-                                 tone: calibration.phase == .complete ? .success : .neutral, detail: calibration.message)
-        }
-        hudController.show(message, preferences: appState.presentation)
     }
 
 }
