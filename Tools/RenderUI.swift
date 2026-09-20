@@ -47,7 +47,7 @@ struct RenderUI {
         let progressHUD = HUDVisualState()
         progressHUD.expanded = true
         progressHUD.message = HUDMessage(text: "Hold a gentle pinch", symbol: "hand.pinch", detail: "Calibrating · hold steady", progress: 0.625)
-        try render(StatusHUDView(state: progressHUD).background(Color(white: 0.2)), size: NSSize(width: 400, height: 110),
+        try render(StatusHUDView(state: progressHUD).background(Color(white: 0.2)), size: NSSize(width: 400, height: 140),
                    to: output.appendingPathComponent("calibration-island.png"))
         let hud = HUDVisualState()
         hud.expanded = true

@@ -42,7 +42,7 @@ final class HUDController {
             panel = hud
         }
         let width = max(400, notchWidth + 80)
-        let height = (state.hasNotch ? top : 0) + 72
+        let height = (state.hasNotch ? top : 0) + state.contentHeight + 12
         let centerX = screen.auxiliaryTopLeftArea.flatMap { left in
             screen.auxiliaryTopRightArea.map { right in (left.maxX + right.minX) / 2 }
         } ?? screen.frame.midX
@@ -66,7 +66,7 @@ final class HUDController {
                 try await Task.sleep(for: .seconds(1.8))
                 guard let self else { return }
                 self.state.expanded = false
-                try await Task.sleep(for: .milliseconds(220))
+                try await Task.sleep(for: .milliseconds(300))
                 self.panel?.orderOut(nil)
             } catch { }
         }

@@ -10,6 +10,7 @@ final class HUDVisualState {
     var notchHeight: CGFloat = 32
     var hasNotch = true
     var reduceMotion = false
+    var contentHeight: CGFloat { message.progress == nil ? 60 : 94 }
 }
 
 /// Interpolates the silhouette, preserving round corners instead of stretching them.
@@ -56,7 +57,7 @@ struct StatusHUDView: View {
         switch state.message.tone { case .success: VisionStyle.green; case .neutral: .white.opacity(0.85); case .error: .orange }
     }
     private var width: CGFloat { max(360, state.notchWidth + 64) }
-    private var height: CGFloat { (state.hasNotch ? state.notchHeight : 0) + 60 }
+    private var height: CGFloat { (state.hasNotch ? state.notchHeight : 0) + state.contentHeight }
     private var surface: NotchSurface {
         NotchSurface(progress: state.expanded || state.reduceMotion ? 1 : 0,
                      notchWidth: state.notchWidth, notchHeight: state.hasNotch ? state.notchHeight : 44,
@@ -68,18 +69,12 @@ struct StatusHUDView: View {
             // Opaque black, without a rim or material, blends into the hardware cutout.
             surface.fill(Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 1))
             HStack(spacing: 12) {
-                ZStack {
-                    if let progress = state.message.progress {
-                        Circle().stroke(.white.opacity(0.12), lineWidth: 2)
-                        Circle().trim(from: 0, to: min(1, max(0, progress)))
-                            .stroke(VisionStyle.green, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                    }
-                    Image(systemName: state.message.symbol)
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
-                    .frame(width: 29, height: 29)
-                    .background(.white.opacity(0.08), in: Circle())
-                }.frame(width: 32, height: 32)
+                Image(systemName: state.message.symbol)
+                    .font(.system(size: state.message.progress == nil ? 13 : 18, weight: .medium))
+                    .foregroundStyle(tint)
+                    .frame(width: state.message.progress == nil ? 29 : 42,
+                           height: state.message.progress == nil ? 29 : 42)
+                    .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 VStack(alignment: .leading, spacing: 4) {
                     Text(state.message.text).font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white).lineLimit(1).truncationMode(.tail)
@@ -100,15 +95,33 @@ struct StatusHUDView: View {
                 }
                 Spacer(minLength: 0)
                 if let progress = state.message.progress {
-                    Text("\(Int(min(1, max(0, progress)) * 100))%")
-                        .font(.system(size: 12, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.7))
+                    ZStack {
+                        Circle().stroke(.white.opacity(0.2), lineWidth: 2.5)
+                        Circle().trim(from: 0, to: min(1, max(0, progress)))
+                            .stroke(.white, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }.frame(width: 32, height: 32)
+                    .accessibilityLabel("\(Int(min(1, max(0, progress)) * 100)) percent")
                 } else if state.repeatCount > 1 {
                     Text("×\(state.repeatCount)").font(.system(size: 12, weight: .medium).monospacedDigit())
                         .foregroundStyle(tint)
                 }
             }
-            .padding(.horizontal, 26)
-            .frame(width: width, height: 60)
+            .padding(.horizontal, state.message.progress == nil ? 26 : 28)
+            .frame(width: width, height: state.contentHeight)
+            .overlay(alignment: .bottom) {
+                if let progress = state.message.progress {
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(.white.opacity(0.15))
+                            Capsule().fill(.white)
+                                .frame(width: geometry.size.width * min(1, max(0, progress)))
+                        }
+                    }
+                    .frame(height: 4).padding(.horizontal, 28).padding(.bottom, 13)
+                    .opacity(state.expanded ? 1 : 0)
+                }
+            }
             .padding(.top, state.hasNotch ? state.notchHeight : 0)
             .offset(y: state.expanded || state.reduceMotion ? 0 : -6)
             .opacity(state.expanded ? 1 : 0)
@@ -117,7 +130,7 @@ struct StatusHUDView: View {
         .frame(width: width, height: height, alignment: .top)
         .opacity(state.expanded || (state.hasNotch && !state.reduceMotion) ? 1 : 0)
         .animation(state.reduceMotion ? .linear(duration: 0.12) :
-            .timingCurve(0.32, 0.72, 0, 1, duration: state.expanded ? 0.22 : 0.18), value: state.expanded)
+            .spring(duration: state.expanded ? 0.34 : 0.22, bounce: state.expanded ? 0.12 : 0), value: state.expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .combine)
     }
