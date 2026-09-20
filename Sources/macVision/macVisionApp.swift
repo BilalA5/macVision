@@ -23,11 +23,16 @@ struct macVisionApp: App {
                 .onChange(of: appState.isGestureEngaged) { _, _ in updateGlow() }
                 .onChange(of: appState.presentation.reduceMotion) { _, _ in updateGlow() }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in updateGlow() }
+                .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in updateGlow() }
+                .onChange(of: appState.settings.preferences.browserOnly) { _, _ in updateGlow() }
                 .onChange(of: appState.hudMessage) { _, message in
                     if let message { hudController.show(message, preferences: appState.presentation) }
                 }
                 .onChange(of: appState.presentation.showHUD) { _, show in
                     if !show { hudController.hide() }
+                    else if (appState.isStarting || appState.calibration.isCollecting), let message = appState.hudMessage {
+                        hudController.show(message, preferences: appState.presentation)
+                    }
                 }
         }
         .menuBarExtraStyle(.window)

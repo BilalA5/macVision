@@ -74,6 +74,7 @@ final class AppState {
     var showsControlGlow: Bool {
         isActive && actionsEnabled && accessibilityGranted && !showsOnboarding
             && !calibration.isCollecting && presentation.showActiveGlow
+            && executor.targetUnavailableReason(browserOnly: settings.preferences.browserOnly) == nil
     }
 
     var trackingFeedbackText: String {

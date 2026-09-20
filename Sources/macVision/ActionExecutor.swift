@@ -10,8 +10,9 @@ struct ActionExecutor {
         _ = AXIsProcessTrustedWithOptions(options)
     }
 
-    func execute(_ shortcut: Shortcut, browserOnly: Bool) -> String? {
-        guard hasPermission else { return "Allow Accessibility access to send shortcuts." }
+    /// Shared by action execution and visual readiness so the glow cannot promise
+    /// control in a foreground app where shortcut delivery would be refused.
+    func targetUnavailableReason(browserOnly: Bool) -> String? {
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
             return "Switch to the app you want to control."
         }
@@ -21,6 +22,12 @@ struct ActionExecutor {
             guard let app = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
                   browsers.contains(app) else { return "Browser mode: switch to a supported browser." }
         }
+        return nil
+    }
+
+    func execute(_ shortcut: Shortcut, browserOnly: Bool) -> String? {
+        guard hasPermission else { return "Allow Accessibility access to send shortcuts." }
+        if let reason = targetUnavailableReason(browserOnly: browserOnly) { return reason }
         guard shortcut.keyCode < 128,
               let source = CGEventSource(stateID: .hidSystemState),
               let down = CGEvent(keyboardEventSource: source, virtualKey: shortcut.keyCode, keyDown: true),
