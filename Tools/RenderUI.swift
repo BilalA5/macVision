@@ -34,6 +34,21 @@ struct RenderUI {
         app.selectedSection = .gestures
         try render(MainWindowView(appState: app).environment(\.colorScheme, .dark), size: NSSize(width: 800, height: 600),
                    to: output.appendingPathComponent("minimum-window.png"))
+        let effects = ZStack {
+            Color(white: 0.07)
+            VStack(spacing: 20) {
+                PrismOrb(active: true, reduceMotion: true).frame(width: 180, height: 180)
+                Text("macVision active").font(.system(size: 20, weight: .medium)).foregroundStyle(.white)
+                Text("Native orb and screen-edge glow").font(.caption).foregroundStyle(.white.opacity(0.5))
+            }
+            ActiveEdgeGlow(reduceMotion: true)
+        }
+        try render(effects, size: NSSize(width: 680, height: 420), to: output.appendingPathComponent("effects-preview.png"))
+        let progressHUD = HUDVisualState()
+        progressHUD.expanded = true
+        progressHUD.message = HUDMessage(text: "Hold a gentle pinch", symbol: "hand.pinch", detail: "Calibrating · hold steady", progress: 0.625)
+        try render(StatusHUDView(state: progressHUD).background(Color(white: 0.2)), size: NSSize(width: 400, height: 110),
+                   to: output.appendingPathComponent("calibration-island.png"))
         let hud = HUDVisualState()
         hud.expanded = true
         hud.message = HUDMessage(text: "Next tab", symbol: "checkmark", tone: .success,
