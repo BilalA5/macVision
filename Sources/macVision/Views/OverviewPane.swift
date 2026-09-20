@@ -8,7 +8,9 @@ struct OverviewPane: View {
         PaneHeading(title: "Overview", subtitle: "Your shortcuts, a gesture away.")
         VisionPanel {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .top, spacing: 20) {
+            HStack(alignment: .center, spacing: 16) {
+                PrismOrb(active: appState.isActive, reduceMotion: appState.presentation.reduceMotion)
+                    .frame(width: 64, height: 64)
                 VStack(alignment: .leading, spacing: 9) {
                     HStack(spacing: 9) {
                         if appState.isStarting { ProgressView().controlSize(.small) }
