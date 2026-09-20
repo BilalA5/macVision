@@ -36,7 +36,7 @@ struct PracticePane: View {
                         .buttonStyle(.borderedProminent).padding(.top, 4)
                     if appState.errorMessage != nil {
                         Button("Review permissions") { appState.selectedSection = .settings }
-                            .buttonStyle(.plain).font(.caption).foregroundStyle(VisionStyle.green)
+                            .buttonStyle(.plain).font(.caption).foregroundStyle(VisionStyle.accent)
                     }
                 } else {
                     StatusBadge(title: "Actions paused", color: .secondary)
@@ -52,11 +52,13 @@ struct PracticePane: View {
         }.font(.caption)
         CalibrationCard(appState: appState)
         DisclosureGroup("Tracking details", isExpanded: $diagnostics) {
-            HStack(spacing: 32) {
+            HStack(spacing: 16) {
                 metric("Confident joints", "\(appState.handTracking.confidentJointCount)/21")
                 metric("Pinch ratio", appState.handTracking.latestFrame.flatMap { PinchMeasurement(frame: $0, finger: appState.settings.preferences.selectedFinger) }
                     .map { String(format: "%.2f", $0.ratio) } ?? "—")
-                metric("Vision processing", String(format: "%.1f ms", appState.handTracking.processingMilliseconds))
+                metric("Vision", String(format: "%.0f ms", appState.handTracking.processingMilliseconds))
+                metric("Frame age", String(format: "%.0f ms", appState.handTracking.frameAgeMilliseconds))
+                metric("Updates", String(format: "%.0f /s", appState.handTracking.deliveredFPS))
             }.padding(.top, 12)
         }
         .font(.system(size: 11)).foregroundStyle(.secondary)
@@ -98,7 +100,7 @@ struct CameraStage: View {
             .frame(width: width, height: geometry.size.height)
             .clipShape(shape)
             .overlay(shape
-                .stroke(tracking ? VisionStyle.green.opacity(0.8) : Color.primary.opacity(0.15), lineWidth: tracking ? 2 : 1))
+                .stroke(tracking ? VisionStyle.accent.opacity(0.8) : Color.primary.opacity(0.15), lineWidth: tracking ? 2 : 1))
             .padding(3)
             .overlay {
                 if circular {
@@ -118,7 +120,7 @@ struct CalibrationCard: View {
         VisionPanel {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text("Personal calibration").font(.system(size: 13, weight: .semibold))
+                    Text("Find your comfortable pinch").font(.system(size: 13, weight: .semibold))
                     Spacer()
                     Text("OPTIONAL").font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundStyle(.secondary)
                 }
@@ -131,16 +133,16 @@ struct CalibrationCard: View {
                     Spacer()
                 }
                 if appState.calibration.isCollecting {
-                    ProgressView(value: Double(appState.calibration.sampleCount), total: Double(CalibrationSession.requiredSamples)).tint(VisionStyle.green)
+                    ProgressView(value: Double(appState.calibration.sampleCount), total: Double(CalibrationSession.requiredSamples)).tint(VisionStyle.accent)
                     HStack {
-                        Text("Hold steady…").font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                        Text(appState.calibration.phase == .open ? "Step 1 of 2 · fingers apart" : "Step 2 of 2 · gentle pinch").font(.caption).monospacedDigit().foregroundStyle(.secondary)
                         Spacer()
                         Button("Cancel", action: appState.cancelCalibration).controlSize(.small)
                     }
                 } else {
                     HStack {
-                        Button(appState.calibration.canCaptureClosed && appState.calibration.phase != .complete ? "Capture closed pinch" : "Calibrate") {
-                            appState.beginCalibration(open: !appState.calibration.canCaptureClosed || appState.calibration.phase == .complete)
+                        Button("Personalize sensitivity") {
+                            appState.beginCalibration(open: true)
                         }.buttonStyle(.borderedProminent).disabled(!appState.isActive)
                         if appState.calibration.canCaptureClosed {
                             Button("Start again") { appState.beginCalibration(open: true) }.disabled(!appState.isActive)
@@ -154,7 +156,7 @@ struct CalibrationCard: View {
                 }
                 if appState.settings.preferences.hasCalibration {
                     Label("Personal sensitivity saved. No need to repeat each session.", systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 10)).foregroundStyle(VisionStyle.green)
+                        .font(.system(size: 10)).foregroundStyle(VisionStyle.accent)
                 }
             }
         }
@@ -163,8 +165,8 @@ struct CalibrationCard: View {
     private func step(_ number: String, _ title: String, done: Bool) -> some View {
         HStack(spacing: 6) {
             ZStack {
-                Circle().fill(done ? VisionStyle.green.opacity(0.15) : Color.primary.opacity(0.05)).frame(width: 22, height: 22)
-                if done { Image(systemName: "checkmark").font(.system(size: 9, weight: .semibold)).foregroundStyle(VisionStyle.green) }
+                Circle().fill(done ? VisionStyle.accent.opacity(0.15) : Color.primary.opacity(0.05)).frame(width: 22, height: 22)
+                if done { Image(systemName: "checkmark").font(.system(size: 9, weight: .semibold)).foregroundStyle(VisionStyle.accent) }
                 else { Text(number).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary) }
             }
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)

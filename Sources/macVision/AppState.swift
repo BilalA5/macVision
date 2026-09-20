@@ -233,7 +233,7 @@ final class AppState {
             handDetected: sample.frame != nil,
             confidentJointCount: sample.frame?.landmarks.values.filter { $0.confidence >= 0.5 }.count ?? 0,
             processingMilliseconds: sample.processingMilliseconds,
-            frame: sample.frame, pinchState: sample.pinchState
+            frame: sample.frame, pinchState: sample.pinchState, capturedAt: sample.capturedAt
         )
         if calibration.isCollecting {
             let before = (calibration.phase, calibration.sampleCount, calibration.message)
