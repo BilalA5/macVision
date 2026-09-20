@@ -44,6 +44,14 @@ struct RenderUI {
             ActiveEdgeGlow(reduceMotion: true)
         }
         try render(effects, size: NSSize(width: 680, height: 420), to: output.appendingPathComponent("effects-preview.png"))
+        let morph = VStack(spacing: 8) {
+            ForEach(0..<5) { index in
+                NotchSurface(progress: CGFloat(index) / 4, notchWidth: 190, expandedHeight: 126,
+                             notchHeight: 32, hasNotch: true)
+                    .fill(.black).frame(width: 360, height: 126)
+            }
+        }.padding(12).background(Color(white: 0.2))
+        try render(morph, size: NSSize(width: 384, height: 686), to: output.appendingPathComponent("notch-morph-stages.png"))
         let progressHUD = HUDVisualState()
         progressHUD.expanded = true
         progressHUD.message = HUDMessage(text: "Hold a gentle pinch", symbol: "hand.pinch", detail: "Calibrating · hold steady", progress: 0.625)
@@ -71,6 +79,7 @@ struct RenderUI {
     @MainActor static func render<V: View>(_ view: V, size: NSSize, to url: URL) throws {
         let host = NSHostingView(rootView: view)
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.appearance = NSAppearance(named: url.lastPathComponent.contains("light") ? .aqua : .darkAqua)
         window.contentView = host
         host.frame = NSRect(origin: .zero, size: size)
         host.layoutSubtreeIfNeeded()

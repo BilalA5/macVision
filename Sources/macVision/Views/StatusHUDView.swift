@@ -17,23 +17,26 @@ final class HUDVisualState {
 struct NotchSurface: Shape {
     var progress: CGFloat
     let notchWidth: CGFloat
+    var expandedHeight: CGFloat
     let notchHeight: CGFloat
     let hasNotch: Bool
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(progress, expandedHeight) }
+        set { progress = newValue.first; expandedHeight = newValue.second }
     }
 
     func path(in rect: CGRect) -> Path {
         let t = min(1, max(0, progress))
         let width = notchWidth + (rect.width - notchWidth) * t
-        let height = notchHeight + (rect.height - notchHeight) * t
+        let height = notchHeight + (expandedHeight - notchHeight) * t
         let x = rect.midX - width / 2
         if !hasNotch {
-            return Path(roundedRect: CGRect(x: x, y: 0, width: width, height: height), cornerRadius: 22)
+            return RoundedRectangle(cornerRadius: min(30, height / 2), style: .continuous)
+                .path(in: CGRect(x: x, y: 0, width: width, height: height))
         }
         let shoulder = 9 * t
-        let radius = min(20, height / 2)
+        let radius = min(14 + 18 * t, height / 2)
+        let k: CGFloat = 0.5522847498
         let left = x + shoulder
         let right = x + width - shoulder
         var p = Path()
@@ -41,9 +44,13 @@ struct NotchSurface: Shape {
         p.addLine(to: CGPoint(x: x + width, y: 0))
         p.addQuadCurve(to: CGPoint(x: right, y: shoulder), control: CGPoint(x: right, y: 0))
         p.addLine(to: CGPoint(x: right, y: height - radius))
-        p.addQuadCurve(to: CGPoint(x: right - radius, y: height), control: CGPoint(x: right, y: height))
+        p.addCurve(to: CGPoint(x: right - radius, y: height),
+                   control1: CGPoint(x: right, y: height - radius + k * radius),
+                   control2: CGPoint(x: right - radius + k * radius, y: height))
         p.addLine(to: CGPoint(x: left + radius, y: height))
-        p.addQuadCurve(to: CGPoint(x: left, y: height - radius), control: CGPoint(x: left, y: height))
+        p.addCurve(to: CGPoint(x: left, y: height - radius),
+                   control1: CGPoint(x: left + radius - k * radius, y: height),
+                   control2: CGPoint(x: left, y: height - radius + k * radius))
         p.addLine(to: CGPoint(x: left, y: shoulder))
         p.addQuadCurve(to: CGPoint(x: x, y: 0), control: CGPoint(x: left, y: 0))
         p.closeSubpath()
@@ -54,13 +61,13 @@ struct NotchSurface: Shape {
 struct StatusHUDView: View {
     let state: HUDVisualState
     private var tint: Color {
-        switch state.message.tone { case .success: VisionStyle.green; case .neutral: .white.opacity(0.85); case .error: .orange }
+        switch state.message.tone { case .success: Color(red: 0.76, green: 0.70, blue: 1); case .neutral: .white.opacity(0.85); case .error: .orange }
     }
     private var width: CGFloat { max(360, state.notchWidth + 64) }
     private var height: CGFloat { (state.hasNotch ? state.notchHeight : 0) + state.contentHeight }
     private var surface: NotchSurface {
         NotchSurface(progress: state.expanded || state.reduceMotion ? 1 : 0,
-                     notchWidth: state.notchWidth, notchHeight: state.hasNotch ? state.notchHeight : 44,
+                     notchWidth: state.notchWidth, expandedHeight: height, notchHeight: state.hasNotch ? state.notchHeight : 44,
                      hasNotch: state.hasNotch)
     }
 
@@ -127,10 +134,11 @@ struct StatusHUDView: View {
             .opacity(state.expanded ? 1 : 0)
             .mask(surface)
         }
-        .frame(width: width, height: height, alignment: .top)
+        .frame(width: width, height: (state.hasNotch ? state.notchHeight : 0) + 94, alignment: .top)
         .opacity(state.expanded || (state.hasNotch && !state.reduceMotion) ? 1 : 0)
         .animation(state.reduceMotion ? .linear(duration: 0.12) :
-            .spring(duration: state.expanded ? 0.34 : 0.22, bounce: state.expanded ? 0.12 : 0), value: state.expanded)
+            .spring(duration: state.expanded ? 0.26 : 0.2, bounce: 0), value: state.expanded)
+        .animation(state.reduceMotion ? nil : .easeOut(duration: 0.2), value: state.message.progress != nil)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .combine)
     }
