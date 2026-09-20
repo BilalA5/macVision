@@ -53,7 +53,7 @@ struct MenuBarView: View {
                         Label(powerTitle, systemImage: "power")
                             .font(.system(size: 11, weight: .medium))
                     }
-                    .buttonStyle(.borderedProminent).controlSize(.regular)
+                    .buttonStyle(VisionPrimaryButtonStyle(quiet: appState.isActive, reduceMotion: appState.presentation.reduceMotion)).controlSize(.regular)
                     .buttonBorderShape(.capsule)
                     .tint(appState.isActive ? Color.secondary : VisionStyle.accent)
                     .accessibilityLabel("\(powerTitle) macVision")

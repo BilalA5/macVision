@@ -30,7 +30,7 @@ struct OverviewPane: View {
                 Button(action: appState.toggleActivation) {
                     Label(appState.isStarting ? "Cancel" : appState.isActive ? "Deactivate" : "Activate", systemImage: "power")
                 }
-                .buttonStyle(.borderedProminent).controlSize(.large)
+                .buttonStyle(VisionPrimaryButtonStyle(quiet: appState.isActive, reduceMotion: appState.presentation.reduceMotion)).controlSize(.large)
                 .tint(appState.isActive ? .gray : VisionStyle.accent)
             }
             HStack(spacing: 8) {
