@@ -68,10 +68,18 @@ struct StatusHUDView: View {
             // Opaque black, without a rim or material, blends into the hardware cutout.
             surface.fill(Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 1))
             HStack(spacing: 12) {
-                Image(systemName: state.message.symbol)
+                ZStack {
+                    if let progress = state.message.progress {
+                        Circle().stroke(.white.opacity(0.12), lineWidth: 2)
+                        Circle().trim(from: 0, to: min(1, max(0, progress)))
+                            .stroke(VisionStyle.green, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
+                    Image(systemName: state.message.symbol)
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
                     .frame(width: 29, height: 29)
                     .background(.white.opacity(0.08), in: Circle())
+                }.frame(width: 32, height: 32)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(state.message.text).font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white).lineLimit(1).truncationMode(.tail)
@@ -91,7 +99,10 @@ struct StatusHUDView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                if state.repeatCount > 1 {
+                if let progress = state.message.progress {
+                    Text("\(Int(min(1, max(0, progress)) * 100))%")
+                        .font(.system(size: 12, weight: .medium).monospacedDigit()).foregroundStyle(.white.opacity(0.7))
+                } else if state.repeatCount > 1 {
                     Text("×\(state.repeatCount)").font(.system(size: 12, weight: .medium).monospacedDigit())
                         .foregroundStyle(tint)
                 }

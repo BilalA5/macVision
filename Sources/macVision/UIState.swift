@@ -37,4 +37,5 @@ struct HUDMessage: Equatable {
     var keycaps: [String] = []
     var detail: String? = nil
     var isAction = false
+    var progress: Double? = nil
 }
