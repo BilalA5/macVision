@@ -19,7 +19,7 @@ struct OnboardingView: View {
             HStack {
                 HStack(spacing: 5) {
                     ForEach(0..<4) { index in
-                        Capsule().fill(index == step ? VisionStyle.green : Color.primary.opacity(0.12))
+                        Capsule().fill(index == step ? VisionStyle.accent : Color.primary.opacity(0.12))
                             .frame(width: index == step ? 20 : 6, height: 5)
                     }
                 }
@@ -60,13 +60,13 @@ struct OnboardingView: View {
                         CameraStage(appState: appState).frame(height: 170)
                         if appState.recentActivity.contains(where: { $0.date >= practiceStarted && $0.gesture == .pinch }) {
                             Label("Pinch and release recognized", systemImage: "checkmark.circle.fill")
-                                .font(.caption).foregroundStyle(VisionStyle.green)
+                                .font(.caption).foregroundStyle(VisionStyle.accent)
                         }
                         Text(appState.trackingFeedbackText)
                             .font(.system(size: 12, weight: .medium))
                         if !appState.isActive {
                             Button(appState.isStarting ? "Cancel" : "Activate camera", action: appState.toggleActivation)
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(VisionPrimaryButtonStyle(reduceMotion: appState.presentation.reduceMotion))
                         }
                         if let error = appState.errorMessage { Text(error).font(.caption).foregroundStyle(.red) }
                     default:
@@ -74,7 +74,7 @@ struct OnboardingView: View {
                             VStack(spacing: 14) {
                                 ForEach([GestureKind.pinch, .hold, .left, .right], id: \.self) { gesture in
                                     HStack {
-                                        Image(systemName: gesture.symbol).frame(width: 24).foregroundStyle(VisionStyle.green)
+                                        Image(systemName: gesture.symbol).frame(width: 24).foregroundStyle(VisionStyle.accent)
                                         Text(gesture.title).font(.system(size: 12))
                                         Spacer()
                                         Text(appState.settings.preferences.bindings[gesture.rawValue]?.actionTitle ?? "Unassigned")
@@ -100,12 +100,13 @@ struct OnboardingView: View {
                         appState.selectedSection = .overview
                         appState.showsOnboarding = false
                     }
-                }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+                }.buttonStyle(VisionPrimaryButtonStyle(reduceMotion: appState.presentation.reduceMotion)).keyboardShortcut(.defaultAction)
             }.padding(24)
         }
         .frame(width: 520, height: 560)
         .background(VisionStyle.canvas(scheme))
-        .tint(VisionStyle.green)
+        .tint(VisionStyle.accent)
+        .accentColor(VisionStyle.accent)
         .onChange(of: step) { _, value in if value == 2 { practiceStarted = Date() } }
         .onChange(of: appState.settings.preferences.selectedFinger) { _, _ in practiceStarted = Date() }
         .onAppear { if appState.actionsEnabled { appState.setActionsEnabled(false) } }
@@ -113,9 +114,9 @@ struct OnboardingView: View {
 
     private func benefit(_ symbol: String, _ title: String, _ subtitle: String) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: symbol).font(.system(size: 17, weight: .regular)).foregroundStyle(VisionStyle.green)
+            Image(systemName: symbol).font(.system(size: 17, weight: .regular)).foregroundStyle(VisionStyle.accent)
                 .frame(width: 36, height: 36)
-                .background(VisionStyle.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                .background(VisionStyle.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 12, weight: .medium))
                 Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)

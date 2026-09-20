@@ -53,7 +53,7 @@ struct HandIllustration: View, @MainActor Animatable {
                 let tip = points[4]
                 let radius: CGFloat = 3.5
                 context.fill(Path(ellipseIn: CGRect(x: tip.x - radius, y: tip.y - radius,
-                                                    width: radius * 2, height: radius * 2)), with: .color(VisionStyle.green))
+                                                    width: radius * 2, height: radius * 2)), with: .color(VisionStyle.accent))
                 let joint = points[2]
                 var crease = Path()
                 crease.move(to: CGPoint(x: joint.x - 2.5, y: joint.y))

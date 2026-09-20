@@ -52,9 +52,9 @@ private struct GestureBindingRow: View {
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: gesture.symbol).font(.system(size: 17, weight: .regular))
-                .foregroundStyle(VisionStyle.green)
+                .foregroundStyle(VisionStyle.accent)
                 .frame(width: 36, height: 36)
-                .background(VisionStyle.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                .background(VisionStyle.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 5) {
                 Text(gesture.title).font(.system(size: 13, weight: .medium))
                 Text(shortcut?.actionTitle ?? "No action assigned").font(.system(size: 11)).foregroundStyle(.secondary)
