@@ -17,7 +17,7 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
     let processingQueue = DispatchQueue(label: "macVision.handTracking", qos: .userInitiated)
     private let request = VNDetectHumanHandPoseRequest()
     private let receive: @MainActor @Sendable (TrackingSample) -> Void
-    private let deliverySlot = DispatchSemaphore(value: 1)
+    private let mailbox = LatestFrameMailbox<TrackingSample>()
     private var engine = GestureEngine()
     private var generation: UUID?
     private var sequence: UInt64 = 0
@@ -69,17 +69,16 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
         let gesture = engine.update(frame: frame, timestamp: timestamp)
         let finished = ProcessInfo.processInfo.systemUptime
         guard gesture != nil || engine.state != previousState || finished - lastPublished >= 1.0 / 35 else { return }
-        // Bounded delivery: never accumulate stale MainActor work behind a busy UI.
-        guard deliverySlot.wait(timeout: .now()) == .success else { return }
         lastPublished = finished
         sequence &+= 1
         let sample = TrackingSample(generation: generation, sequence: sequence, frame: frame,
                                     pinchState: engine.state, gesture: gesture,
                                     processingMilliseconds: (finished - now) * 1_000,
                                     capturedAt: now - max(0, age))
-        Task { @MainActor [receive, deliverySlot] in
-            defer { deliverySlot.signal() }
-            receive(sample)
+        // Coalesce preview frames, but preserve a completed gesture until consumed.
+        guard mailbox.offer(sample, isEvent: gesture != nil) else { return }
+        Task { @MainActor [receive, mailbox] in
+            if let latest = mailbox.take() { receive(latest) }
         }
     }
 
