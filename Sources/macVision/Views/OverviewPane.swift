@@ -15,7 +15,7 @@ struct OverviewPane: View {
                     HStack(spacing: 9) {
                         if appState.isStarting { ProgressView().controlSize(.small) }
                         else {
-                            Circle().fill(appState.errorMessage != nil && !appState.isActive ? .red : appState.isActive ? VisionStyle.green : .secondary)
+                            Circle().fill(appState.errorMessage != nil && !appState.isActive ? .red : appState.isActive ? VisionStyle.accent : .secondary)
                                 .frame(width: 8, height: 8)
                         }
                         Text(appState.modeTitle).font(.system(size: 20, weight: .semibold)).tracking(-0.4)
@@ -31,7 +31,7 @@ struct OverviewPane: View {
                     Label(appState.isStarting ? "Cancel" : appState.isActive ? "Deactivate" : "Activate", systemImage: "power")
                 }
                 .buttonStyle(.borderedProminent).controlSize(.large)
-                .tint(appState.isActive ? .gray : VisionStyle.green)
+                .tint(appState.isActive ? .gray : VisionStyle.accent)
             }
             HStack(spacing: 8) {
                 Text("Activation shortcut").font(.system(size: 11)).foregroundStyle(.secondary)
@@ -89,7 +89,7 @@ struct OverviewPane: View {
                     VStack(spacing: 12) {
                         ForEach(appState.recentActivity) { activity in
                             HStack(spacing: 12) {
-                                Image(systemName: activity.gesture.symbol).frame(width: 24).foregroundStyle(VisionStyle.green)
+                                Image(systemName: activity.gesture.symbol).frame(width: 24).foregroundStyle(VisionStyle.accent)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(activity.gesture.title).font(.system(size: 12, weight: .medium))
                                     Text(activity.detail).font(.system(size: 11)).foregroundStyle(.secondary)

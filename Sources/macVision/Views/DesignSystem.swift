@@ -2,11 +2,19 @@ import SwiftUI
 import AppKit
 
 enum VisionStyle {
-    static let green = Color(red: 0.25, green: 0.75, blue: 0.38)
+    static let accent = Color(nsColor: NSColor(name: "Gesture accent") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 0.69, green: 0.63, blue: 1, alpha: 1)
+            : NSColor(red: 0.37, green: 0.28, blue: 0.78, alpha: 1)
+    })
+    static let green = accent // Compatibility while call sites migrate to the semantic token.
+    static let spectrum = LinearGradient(colors: [Color(red: 0.43, green: 0.78, blue: 0.96),
+        Color(red: 0.69, green: 0.57, blue: 0.98), Color(red: 0.95, green: 0.57, blue: 0.72)],
+        startPoint: .topLeading, endPoint: .bottomTrailing)
     static let radius: CGFloat = 14
     static let pagePadding: CGFloat = 28
     static let sectionGap: CGFloat = 22
-    static let hairline = Color.primary.opacity(0.08)
+    static let hairline = Color.primary.opacity(0.06)
     static let surface = Color.primary.opacity(0.035)
     static let muted = Color.secondary
     static func canvas(_ scheme: ColorScheme) -> Color {
@@ -33,8 +41,8 @@ struct VisionPanel<Content: View>: View {
     var body: some View {
         content.padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.8), in: RoundedRectangle(cornerRadius: VisionStyle.radius))
-            .overlay(RoundedRectangle(cornerRadius: VisionStyle.radius).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.08)))
+            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.8), in: RoundedRectangle(cornerRadius: VisionStyle.radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: VisionStyle.radius, style: .continuous).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.08)))
             .shadow(color: .black.opacity(scheme == .dark ? 0.08 : 0.025), radius: 8, y: 3)
     }
 }
@@ -61,7 +69,7 @@ struct PaneHeading: View {
 
 struct StatusBadge: View {
     let title: String
-    var color: Color = VisionStyle.green
+    var color: Color = VisionStyle.accent
     var body: some View {
         HStack(spacing: 6) {
             Circle().fill(color).frame(width: 6, height: 6)
@@ -122,9 +130,9 @@ struct AppMark: View {
     var body: some View {
         Image(systemName: "hand.pinch.fill")
             .font(.system(size: size * 0.48, weight: .medium))
-            .foregroundStyle(.white.opacity(0.92))
+            .foregroundStyle(VisionStyle.spectrum)
             .frame(width: size, height: size)
-            .background(LinearGradient(colors: [Color(white: 0.26), Color(white: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing),
+            .background(LinearGradient(colors: [Color(red: 0.22, green: 0.20, blue: 0.3), Color(white: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing),
                         in: RoundedRectangle(cornerRadius: size * 0.27))
             .overlay(RoundedRectangle(cornerRadius: size * 0.27).strokeBorder(.white.opacity(0.12)))
             .accessibilityHidden(true)

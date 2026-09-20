@@ -35,7 +35,8 @@ struct MainWindowView: View {
         }
         .background(WindowAppearance().frame(width: 0, height: 0))
         .font(.system(size: 13))
-        .tint(VisionStyle.green)
+        .tint(VisionStyle.accent)
+        .accentColor(VisionStyle.accent)
         .frame(minWidth: 800, minHeight: 600)
         .ignoresSafeArea(.container, edges: .top)
         .preferredColorScheme(appState.presentation.colorScheme)
@@ -76,14 +77,14 @@ struct MainWindowView: View {
                     } label: {
                         HStack(spacing: 9) {
                             Image(systemName: section.symbol).font(.system(size: 14))
-                                .foregroundStyle(appState.selectedSection == section ? VisionStyle.green : .secondary)
+                                .foregroundStyle(appState.selectedSection == section ? VisionStyle.accent : .secondary)
                                 .frame(width: 18)
                             Text(section == .practice ? "Practice" : section.title).font(.system(size: 13, weight: appState.selectedSection == section ? .medium : .regular))
                             Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 10).frame(height: 38)
                         .contentShape(Rectangle())
-                        .background(appState.selectedSection == section ? VisionStyle.green.opacity(0.10) : hoveredSection == section ? Color.primary.opacity(0.035) : .clear,
+                        .background(appState.selectedSection == section ? VisionStyle.accent.opacity(0.10) : hoveredSection == section ? Color.primary.opacity(0.035) : .clear,
                                     in: RoundedRectangle(cornerRadius: 9))
                     }
                     .buttonStyle(.plain)
@@ -96,7 +97,7 @@ struct MainWindowView: View {
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 7) {
-                    Circle().fill(appState.isActive ? VisionStyle.green : Color.secondary.opacity(0.6))
+                    Circle().fill(appState.isActive ? VisionStyle.accent : Color.secondary.opacity(0.6))
                         .frame(width: 6, height: 6)
                     Text(appState.modeTitle).font(.system(size: 11, weight: .medium))
                 }
