@@ -10,7 +10,8 @@ struct SettingsView: View {
         }
         .frame(width: 590, height: 650)
         .background(VisionStyle.canvas(scheme))
-        .tint(VisionStyle.green)
+        .tint(VisionStyle.accent)
+        .accentColor(VisionStyle.accent)
         .preferredColorScheme(appState.presentation.colorScheme)
     }
 }

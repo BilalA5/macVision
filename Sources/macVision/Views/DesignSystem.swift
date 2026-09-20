@@ -7,7 +7,6 @@ enum VisionStyle {
             ? NSColor(red: 0.69, green: 0.63, blue: 1, alpha: 1)
             : NSColor(red: 0.37, green: 0.28, blue: 0.78, alpha: 1)
     })
-    static let green = accent // Compatibility while call sites migrate to the semantic token.
     static let spectrum = LinearGradient(colors: [Color(red: 0.43, green: 0.78, blue: 0.96),
         Color(red: 0.69, green: 0.57, blue: 0.98), Color(red: 0.95, green: 0.57, blue: 0.72)],
         startPoint: .topLeading, endPoint: .bottomTrailing)

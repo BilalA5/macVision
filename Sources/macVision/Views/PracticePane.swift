@@ -33,7 +33,7 @@ struct PracticePane: View {
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 if !appState.isActive {
                     Button(appState.isStarting ? "Cancel" : "Activate camera", action: appState.toggleActivation)
-                        .buttonStyle(.borderedProminent).padding(.top, 4)
+                        .buttonStyle(VisionPrimaryButtonStyle(reduceMotion: appState.presentation.reduceMotion)).padding(.top, 4)
                     if appState.errorMessage != nil {
                         Button("Review permissions") { appState.selectedSection = .settings }
                             .buttonStyle(.plain).font(.caption).foregroundStyle(VisionStyle.accent)
@@ -143,7 +143,7 @@ struct CalibrationCard: View {
                     HStack {
                         Button("Personalize sensitivity") {
                             appState.beginCalibration(open: true)
-                        }.buttonStyle(.borderedProminent).disabled(!appState.isActive)
+                        }.buttonStyle(VisionPrimaryButtonStyle(reduceMotion: appState.presentation.reduceMotion)).disabled(!appState.isActive)
                         if appState.calibration.canCaptureClosed {
                             Button("Start again") { appState.beginCalibration(open: true) }.disabled(!appState.isActive)
                         }
