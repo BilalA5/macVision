@@ -19,6 +19,7 @@ struct TestRunner {
         try corruptPreferencesFallBackWithoutCrashing()
         staleSessionAndOutOfOrderResultsAreRejected()
         try fingerSelectionAndShortCalibration()
-        print("Passed 12 gesture, settings and delivery tests.")
+        calibrationCancellationAndTimeoutClearLiveProgress()
+        print("Passed 13 gesture, settings and delivery tests.")
     }
 }

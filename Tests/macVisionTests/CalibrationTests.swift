@@ -54,3 +54,26 @@ private func calibrationFrame(_ ratio: Double, finger: PinchFinger = .middle) ->
     session.cancel()
     expect(!session.isCollecting && !session.canCaptureClosed)
 }
+
+@MainActor func calibrationCancellationAndTimeoutClearLiveProgress() {
+    let name = "macVision.tests.\(UUID())"
+    let defaults = UserDefaults(suiteName: name)!
+    defer { defaults.removePersistentDomain(forName: name) }
+    let settings = GestureSettings(defaults: defaults)
+    settings.selectFinger(.middle)
+    let session = CalibrationSession()
+    let now = ProcessInfo.processInfo.systemUptime
+    session.beginOpen(finger: .middle)
+    _ = session.consume(calibrationFrame(0.8), settings: settings, now: now)
+    _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.5)
+    expect(session.sampleCount == 1 && session.isCollecting)
+    session.cancel()
+    expect(session.sampleCount == 0 && !session.isCollecting && !session.canCaptureClosed)
+    _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.6)
+    expect(session.sampleCount == 0) // A late frame must not resurrect a cancelled activity.
+    session.beginOpen(finger: .middle)
+    _ = session.consume(nil, settings: settings, now: now + 60)
+    expect(!session.isCollecting && session.sampleCount == 0)
+    expect(session.message.contains("Could not collect"))
+    expect(!settings.preferences.hasCalibration)
+}
