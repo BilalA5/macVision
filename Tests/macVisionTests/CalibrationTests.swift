@@ -36,18 +36,18 @@ private func calibrationFrame(_ ratio: Double, finger: PinchFinger = .middle) ->
     let now = ProcessInfo.processInfo.systemUptime
     session.beginOpen(finger: .middle)
     _ = session.consume(calibrationFrame(0.8), settings: settings, now: now)
-    for i in 0..<8 { _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.5 + Double(i) / 15) }
+    for i in 0..<CalibrationSession.requiredSamples { _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.5 + Double(i) / 15) }
     expect(session.canCaptureClosed)
     session.beginClosed(finger: .middle)
     _ = session.consume(calibrationFrame(0.1), settings: settings, now: now + 2)
     var saved = false
-    for i in 0..<8 { saved = session.consume(calibrationFrame(0.1), settings: settings, now: now + 2.5 + Double(i) / 15) }
+    for i in 0..<CalibrationSession.requiredSamples { saved = session.consume(calibrationFrame(0.1), settings: settings, now: now + 2.5 + Double(i) / 15) }
     expect(saved && settings.preferences.hasCalibration)
     settings.selectFinger(.ring)
     expect(!settings.preferences.hasCalibration)
     session.beginOpen(finger: .ring)
     _ = session.consume(calibrationFrame(0.8, finger: .ring), settings: settings, now: now + 4)
-    for i in 0..<8 { _ = session.consume(calibrationFrame(i % 2 == 0 ? 0.3 : 0.9, finger: .ring), settings: settings, now: now + 4.5 + Double(i) / 15) }
+    for i in 0..<CalibrationSession.requiredSamples { _ = session.consume(calibrationFrame(i % 2 == 0 ? 0.3 : 0.9, finger: .ring), settings: settings, now: now + 4.5 + Double(i) / 15) }
     expect(!session.canCaptureClosed)
     _ = session.consume(nil, settings: settings, now: now + 6)
     expect(session.sampleCount == 0)
@@ -76,4 +76,32 @@ private func calibrationFrame(_ ratio: Double, finger: PinchFinger = .middle) ->
     expect(!session.isCollecting && session.sampleCount == 0)
     expect(session.message.contains("Could not collect"))
     expect(!settings.preferences.hasCalibration)
+}
+
+@MainActor func calibrationAutomaticallyAdvancesAndToleratesBriefLoss() {
+    let name = "macVision.tests.\(UUID())"
+    let defaults = UserDefaults(suiteName: name)!
+    defer { defaults.removePersistentDomain(forName: name) }
+    let settings = GestureSettings(defaults: defaults)
+    settings.selectFinger(.middle)
+    let session = CalibrationSession()
+    let now = ProcessInfo.processInfo.systemUptime
+    session.beginOpen(finger: .middle)
+    _ = session.consume(calibrationFrame(0.8), settings: settings, now: now)
+    _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.3)
+    _ = session.consume(nil, settings: settings, now: now + 0.34)
+    expect(session.sampleCount == 1)
+    for i in 1..<CalibrationSession.requiredSamples {
+        _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 0.35 + Double(i) / 30)
+    }
+    expect(session.phase == .closed && session.sampleCount == 0)
+    for i in 0..<10 {
+        _ = session.consume(calibrationFrame(0.8), settings: settings, now: now + 1 + Double(i) / 30)
+    }
+    expect(session.phase == .closed && session.sampleCount == 0 && !settings.preferences.hasCalibration)
+    _ = session.consume(calibrationFrame(0.1), settings: settings, now: now + 2)
+    for i in 0..<CalibrationSession.requiredSamples {
+        _ = session.consume(calibrationFrame(0.1), settings: settings, now: now + 2.3 + Double(i) / 30)
+    }
+    expect(session.phase == .complete && settings.preferences.hasCalibration)
 }

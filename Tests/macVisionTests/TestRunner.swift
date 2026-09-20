@@ -20,6 +20,7 @@ struct TestRunner {
         staleSessionAndOutOfOrderResultsAreRejected()
         try fingerSelectionAndShortCalibration()
         calibrationCancellationAndTimeoutClearLiveProgress()
-        print("Passed 13 gesture, settings and delivery tests.")
+        calibrationAutomaticallyAdvancesAndToleratesBriefLoss()
+        print("Passed 14 gesture, settings and delivery tests.")
     }
 }
