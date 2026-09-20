@@ -27,7 +27,7 @@ struct PinchMeasurement: Sendable {
 
         guard fingertipDistance.isFinite,
               palmLength.isFinite,
-              palmLength > 1 else {
+              palmLength >= 20 else {
             return nil
         }
 

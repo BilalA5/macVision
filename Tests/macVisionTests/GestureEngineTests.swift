@@ -93,4 +93,11 @@ func pinchRatioAccountsForImageAspectAndRejectsMissingJoints() {
     expect(abs((PinchMeasurement(frame: wide)?.ratio ?? -1) - 0.2) < 0.0001)
     let empty = HandFrame(timeStamp: 0, imageWidth: 1280, imageHeight: 720, landmarks: [:])
     expect(PinchMeasurement(frame: empty) == nil)
+    let tiny = HandFrame(timeStamp: 0, imageWidth: 100, imageHeight: 100, landmarks: [
+        .wrist: HandLandmark(x: 0.5, y: 0.4, confidence: 1),
+        .middleMCP: HandLandmark(x: 0.5, y: 0.5, confidence: 1),
+        .thumbTip: HandLandmark(x: 0.5, y: 0.6, confidence: 1),
+        .indexTip: HandLandmark(x: 0.51, y: 0.6, confidence: 1)
+    ])
+    expect(PinchMeasurement(frame: tiny) == nil) // Calibration and actions share the same size gate.
 }
