@@ -63,6 +63,28 @@ final class AppState {
         return actionsEnabled ? "Gestures send your shortcuts to the foreground app." : "Your camera is on. Try a gesture — no shortcuts will be sent."
     }
 
+    /// Visuals follow accepted tracking samples, never the preview camera alone.
+    var hasUsableHand: Bool {
+        isActive && handTracking.latestFrame.flatMap {
+            PinchMeasurement(frame: $0, finger: settings.preferences.selectedFinger)
+        } != nil
+    }
+
+    var isGestureEngaged: Bool { hasUsableHand && handTracking.pinchState == .pinched }
+    var showsControlGlow: Bool {
+        isActive && actionsEnabled && accessibilityGranted && !showsOnboarding
+            && !calibration.isCollecting && presentation.showActiveGlow
+    }
+
+    var trackingFeedbackText: String {
+        guard isActive else { return modeTitle }
+        guard hasUsableHand else { return "Bring one hand fully into view" }
+        if calibration.isCollecting { return "Hold the calibration pose steady" }
+        if isGestureEngaged { return "Pinch held · release to finish" }
+        if handTracking.pinchState == .waitingForRelease { return "Open your fingers to get ready" }
+        return "Hand ready · pinch to begin"
+    }
+
     var statusText: String { isStarting ? "Starting camera…" : (isActive ? "Active" : "Off") }
 
     func toggleActivation() {

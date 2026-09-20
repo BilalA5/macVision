@@ -3,11 +3,12 @@ import SwiftUI
 /// Original native rendering inspired by the public glass-and-ribbon reference.
 struct PrismOrb: View {
     var active: Bool
+    var engaged = true
     var reduceMotion = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var visible = false
-    private var animates: Bool { visible && active && !reduceMotion && !systemReduceMotion && scenePhase == .active }
+    private var animates: Bool { visible && active && engaged && !reduceMotion && !systemReduceMotion && scenePhase == .active }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { timeline in
@@ -104,10 +105,11 @@ struct PrismOrb: View {
 
 struct ActiveEdgeGlow: View {
     var reduceMotion = false
+    var engaged = true
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 15, paused: reduceMotion || systemReduceMotion)) { timeline in
-            let angle = reduceMotion || systemReduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10) * 36
+        TimelineView(.animation(minimumInterval: 1.0 / 15, paused: !engaged || reduceMotion || systemReduceMotion)) { timeline in
+            let angle = !engaged || reduceMotion || systemReduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10) * 36
             let colors: [Color] = [Color(red: 0.42, green: 0.82, blue: 0.97),
                 Color(red: 0.53, green: 0.55, blue: 0.96), Color(red: 0.82, green: 0.48, blue: 0.88),
                 Color(red: 1, green: 0.57, blue: 0.62), Color(red: 1, green: 0.75, blue: 0.43),
@@ -127,6 +129,7 @@ struct ActiveEdgeGlow: View {
                     .strokeBorder(.white.opacity(0.23), lineWidth: 0.75)
             }.padding(0.5).clipped()
         }
+        .opacity(engaged ? 1 : 0.5)
         .allowsHitTesting(false).accessibilityHidden(true)
     }
 }

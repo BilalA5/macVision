@@ -9,7 +9,7 @@ struct OverviewPane: View {
         VisionPanel {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .center, spacing: 16) {
-                PrismOrb(active: appState.isActive, reduceMotion: appState.presentation.reduceMotion)
+                PrismOrb(active: appState.hasUsableHand, engaged: appState.isGestureEngaged || appState.calibration.isCollecting, reduceMotion: appState.presentation.reduceMotion)
                     .frame(width: 64, height: 64)
                 VStack(alignment: .leading, spacing: 9) {
                     HStack(spacing: 9) {
@@ -19,6 +19,9 @@ struct OverviewPane: View {
                                 .frame(width: 8, height: 8)
                         }
                         Text(appState.modeTitle).font(.system(size: 20, weight: .semibold)).tracking(-0.4)
+                    }
+                    if appState.isActive {
+                        Text(appState.trackingFeedbackText).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                     }
                     Text(appState.modeDescription).font(.system(size: 12)).foregroundStyle(.secondary)
                         .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
