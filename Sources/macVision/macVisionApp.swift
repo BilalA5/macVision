@@ -19,15 +19,10 @@ struct macVisionApp: App {
         } label: {
             Image(systemName: appState.isActive ? "hand.pinch.fill" : "hand.pinch")
                 .accessibilityLabel("macVision")
-                .onChange(of: appState.isActive && appState.actionsEnabled && appState.presentation.showActiveGlow) { _, enabled in
-                    glowController.update(enabled: enabled, reduceMotion: appState.presentation.reduceMotion)
-                }
-                .onChange(of: appState.presentation.reduceMotion) { _, reduced in
-                    glowController.update(enabled: appState.isActive && appState.actionsEnabled && appState.presentation.showActiveGlow, reduceMotion: reduced)
-                }
-                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
-                    glowController.update(enabled: appState.isActive && appState.actionsEnabled && appState.presentation.showActiveGlow, reduceMotion: appState.presentation.reduceMotion)
-                }
+                .onChange(of: appState.showsControlGlow, initial: true) { _, _ in updateGlow() }
+                .onChange(of: appState.isGestureEngaged) { _, _ in updateGlow() }
+                .onChange(of: appState.presentation.reduceMotion) { _, _ in updateGlow() }
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in updateGlow() }
                 .onChange(of: appState.calibration.sampleCount) { _, _ in presentCalibration() }
                 .onChange(of: appState.calibration.phase) { _, _ in presentCalibration() }
                 .onChange(of: appState.hudMessage) { _, message in
@@ -41,6 +36,12 @@ struct macVisionApp: App {
 
         Settings { SettingsView(appState: appState) }
     }
+    private func updateGlow() {
+        glowController.update(enabled: appState.showsControlGlow,
+                              reduceMotion: appState.presentation.reduceMotion,
+                              engaged: appState.isGestureEngaged)
+    }
+
     private func presentCalibration() {
         let calibration = appState.calibration
         let message: HUDMessage

@@ -5,7 +5,7 @@ import SwiftUI
 final class ActiveGlowController {
     private var panel: NSPanel?
 
-    func update(enabled: Bool, reduceMotion: Bool) {
+    func update(enabled: Bool, reduceMotion: Bool, engaged: Bool) {
         guard enabled, let screen = NSScreen.main else {
             // Remove the hosted timeline as well as the window so hidden glow does no work.
             panel?.orderOut(nil)
@@ -25,7 +25,7 @@ final class ActiveGlowController {
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             panel = window
         }
-        window.contentView = NSHostingView(rootView: ActiveEdgeGlow(reduceMotion: reduceMotion))
+        window.contentView = NSHostingView(rootView: ActiveEdgeGlow(reduceMotion: reduceMotion, engaged: engaged))
         window.setFrame(screen.frame, display: true)
         window.orderFrontRegardless()
     }
