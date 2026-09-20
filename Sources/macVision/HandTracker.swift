@@ -21,7 +21,7 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
     private var engine = GestureEngine()
     private var generation: UUID?
     private var sequence: UInt64 = 0
-    private var lastProcessed = -Double.infinity
+    private var nextProcessAt = -Double.infinity
     private var lastPublished = -Double.infinity
 
     init(receive: @escaping @MainActor @Sendable (TrackingSample) -> Void) {
@@ -36,7 +36,7 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
             self.generation = generation
             engine = GestureEngine(closeThreshold: preferences.closeThreshold,
                                    openThreshold: preferences.openThreshold, finger: preferences.selectedFinger)
-            lastProcessed = -.infinity
+            nextProcessAt = -.infinity
             lastPublished = -.infinity
         }
     }
@@ -46,8 +46,10 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
         dispatchPrecondition(condition: .onQueue(processingQueue))
         guard let generation else { return }
         let now = ProcessInfo.processInfo.systemUptime
-        guard now - lastProcessed >= 1.0 / 30 else { return }
-        lastProcessed = now
+        // Deadline scheduling avoids accidentally halving a nominal 30 fps stream
+        // when successive callbacks arrive a fraction early.
+        guard now + 0.002 >= nextProcessAt else { return }
+        nextProcessAt = max(nextProcessAt + 1.0 / 30, now + 1.0 / 60)
         let timestamp = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         let hostTime = CMTimeGetSeconds(CMClockGetTime(CMClockGetHostTimeClock()))
         let age = hostTime - timestamp
@@ -63,9 +65,10 @@ final class HandTracker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate,
             // A failed observation is tracking loss, never a completed gesture.
             frame = nil
         }
+        let previousState = engine.state
         let gesture = engine.update(frame: frame, timestamp: timestamp)
         let finished = ProcessInfo.processInfo.systemUptime
-        guard gesture != nil || finished - lastPublished >= 1.0 / 15 else { return }
+        guard gesture != nil || engine.state != previousState || finished - lastPublished >= 1.0 / 35 else { return }
         // Bounded delivery: never accumulate stale MainActor work behind a busy UI.
         guard deliverySlot.wait(timeout: .now()) == .success else { return }
         lastPublished = finished

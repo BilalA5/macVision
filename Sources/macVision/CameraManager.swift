@@ -84,6 +84,10 @@ final class CameraManager: @unchecked Sendable {
         let input = try AVCaptureDeviceInput(device: device)
         let output = AVCaptureVideoDataOutput()
         output.alwaysDiscardsLateVideoFrames = true
+        // Keep the camera's native bi-planar format instead of requesting RGB conversion.
+        if output.availableVideoPixelFormatTypes.contains(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
+            output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange]
+        }
         output.setSampleBufferDelegate(handTracker, queue: handTracker.processingQueue)
         session.beginConfiguration()
         defer { session.commitConfiguration() }
