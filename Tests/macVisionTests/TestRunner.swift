@@ -21,6 +21,16 @@ struct TestRunner {
         try fingerSelectionAndShortCalibration()
         calibrationCancellationAndTimeoutClearLiveProgress()
         calibrationAutomaticallyAdvancesAndToleratesBriefLoss()
-        print("Passed 14 gesture, settings and delivery tests.")
+        let mailbox = LatestFrameMailbox<Int>()
+        expect(mailbox.offer(1, isEvent: false))
+        expect(!mailbox.offer(2, isEvent: false))
+        expect(mailbox.take() == 2)
+        expect(mailbox.offer(3, isEvent: true))
+        expect(!mailbox.offer(4, isEvent: false))
+        expect(mailbox.take() == 3) // Busy UI must not discard an action for a preview frame.
+        expect(mailbox.offer(5, isEvent: true))
+        expect(!mailbox.offer(6, isEvent: true))
+        expect(mailbox.take() == 6 && mailbox.take() == nil)
+        print("Passed 15 gesture, settings and delivery tests.")
     }
 }
