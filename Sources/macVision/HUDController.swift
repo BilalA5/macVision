@@ -62,7 +62,7 @@ final class HUDController {
                 if !wasVisible { try await Task.sleep(for: .milliseconds(32)) }
                 guard !Task.isCancelled else { return }
                 self?.state.expanded = true
-                if message.progress != nil { return } // Live activities remain until their next state.
+                if message.progress != nil || message.isPersistent { return } // Live activities remain until their next state.
                 try await Task.sleep(for: .seconds(1.8))
                 guard let self else { return }
                 self.state.expanded = false

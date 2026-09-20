@@ -38,4 +38,5 @@ struct HUDMessage: Equatable {
     var detail: String? = nil
     var isAction = false
     var progress: Double? = nil
+    var isPersistent = false
 }
