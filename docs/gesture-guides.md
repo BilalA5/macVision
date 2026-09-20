@@ -1,6 +1,6 @@
-# Skeletal gesture guides
+# Gesture guides
 
-The supplied React prototype's learn/replay flow is implemented natively with SwiftUI. SkeletalHand is an illustrative 21-landmark diagram, not a camera observation or an anatomical 3D model. The selected thumb/finger chains are green; other joints and connections remain quiet neutral tones.
+The supplied React prototype's learn/replay flow is implemented natively with SwiftUI. HandIllustration uses a soft neutral palm and rounded fingers driven by illustrative joint positions. Only the selected fingertips carry green markers. It is not a camera observation or an anatomical 3D model.
 
 Each gesture row opens a guide with the real configured shortcut and an explicit Practice action. Opening the guide pauses shortcut execution. Onboarding and Practice reuse the pinch guide. Replay demonstrates open, pinch, optional hold/directional movement, and release once. It does not send a shortcut. The task cancels when the view is removed; leaving the active scene resets playback. Reduced Motion shows a static pose and written steps.
 

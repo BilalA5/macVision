@@ -34,7 +34,7 @@ struct OnboardingView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     if step == 0 {
-                        SkeletalHand(closure: 0.5, finger: appState.settings.preferences.selectedFinger)
+                        HandIllustration(closure: 0.5, finger: appState.settings.preferences.selectedFinger)
                             .frame(height: 116).padding(.top, 8)
                     }
                     VStack(spacing: 10) {

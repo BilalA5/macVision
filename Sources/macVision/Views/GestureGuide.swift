@@ -38,7 +38,7 @@ struct GestureGuide: View {
                 Spacer()
                 Text("Thumb + \(finger.title.lowercased())").font(.caption).foregroundStyle(.secondary)
             }
-            SkeletalHand(closure: reduced ? 0.65 : closure, finger: finger)
+            HandIllustration(closure: reduced ? 0.65 : closure, finger: finger)
                 .frame(height: 164)
                 .offset(x: direction.width * displacement, y: direction.height * displacement)
                 .frame(maxWidth: .infinity).frame(height: 216)
