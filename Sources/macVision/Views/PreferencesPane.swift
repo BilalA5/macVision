@@ -54,6 +54,10 @@ struct PreferencesPane: View {
                         Toggle("Reduce motion", isOn: $appearance.reduceMotion).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
                     Divider()
+                    PreferenceRow(title: "Active screen glow", subtitle: "Light the screen edge while gesture actions are enabled.", symbol: "sparkles") {
+                        Toggle("Active screen glow", isOn: $appearance.showActiveGlow).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                    }
+                    Divider()
                     PreferenceRow(title: "Notch feedback", subtitle: "Brief gesture confirmations, without taking focus.", symbol: "menubar.rectangle") {
                         Toggle("Notch feedback", isOn: $appearance.showHUD).labelsHidden().toggleStyle(.switch).controlSize(.small)
                     }
