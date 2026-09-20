@@ -18,6 +18,8 @@ struct macVisionApp: App {
             MenuBarView(appState: appState)
         } label: {
             Image(systemName: appState.isActive ? "hand.pinch.fill" : "hand.pinch")
+                .renderingMode(.original)
+                .foregroundStyle(appState.isActive ? VisionStyle.accent : Color.primary)
                 .accessibilityLabel("macVision")
                 .onChange(of: appState.showsControlGlow, initial: true) { _, _ in updateGlow() }
                 .onChange(of: appState.isGestureEngaged) { _, _ in updateGlow() }

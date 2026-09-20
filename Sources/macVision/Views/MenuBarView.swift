@@ -30,7 +30,7 @@ struct MenuBarView: View {
                 Text("macVision").font(.system(size: 14, weight: .semibold)).tracking(-0.3)
                 Spacer()
                 HStack(spacing: 5) {
-                    Circle().fill(appState.isActive ? VisionStyle.green : Color.secondary).frame(width: 5, height: 5)
+                    Circle().fill(appState.isActive ? VisionStyle.accent : Color.secondary).frame(width: 5, height: 5)
                     Text(appState.modeTitle).font(.system(size: 10, weight: .medium))
                 }
                 .foregroundStyle(.secondary)
@@ -53,8 +53,9 @@ struct MenuBarView: View {
                         Label(powerTitle, systemImage: "power")
                             .font(.system(size: 11, weight: .medium))
                     }
-                    .buttonStyle(.bordered).controlSize(.regular)
-                    .tint(appState.isActive ? Color.secondary : VisionStyle.green)
+                    .buttonStyle(.borderedProminent).controlSize(.regular)
+                    .buttonBorderShape(.capsule)
+                    .tint(appState.isActive ? Color.secondary : VisionStyle.accent)
                     .accessibilityLabel("\(powerTitle) macVision")
                 }
                 Rectangle().fill(VisionStyle.hairline).frame(height: 1)
@@ -76,8 +77,8 @@ struct MenuBarView: View {
                 }
             }
             .padding(12)
-            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.07)))
+            .background(scheme == .dark ? Color.white.opacity(0.035) : Color.white.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.07)))
 
             VStack(spacing: 2) {
                 menuItem("Open macVision", symbol: "macwindow") { open(.overview) }
@@ -101,9 +102,10 @@ struct MenuBarView: View {
             .overlay(alignment: .top) { Rectangle().fill(VisionStyle.hairline).frame(height: 1) }
         }
         .padding(12)
-        .frame(width: 300)
+        .frame(width: 312)
         .background(VisionStyle.canvas(scheme).opacity(systemReduceTransparency || appState.presentation.reduceTransparency ? 1 : 0.94))
-        .tint(VisionStyle.green)
+        .tint(VisionStyle.accent)
+        .accentColor(VisionStyle.accent)
         .preferredColorScheme(appState.presentation.colorScheme)
     }
 
@@ -115,7 +117,7 @@ struct MenuBarView: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 9).frame(height: 33).contentShape(Rectangle())
+            .padding(.horizontal, 9).frame(height: 36).contentShape(Rectangle())
             .background(hoveredItem == title ? Color.primary.opacity(0.06) : .clear, in: RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)

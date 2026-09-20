@@ -90,7 +90,7 @@ struct PermissionControls: View {
                 VStack(spacing: 12) {
                     PreferenceRow(title: "Camera", subtitle: "For recognizing your hand. Frames are never saved.", symbol: "camera") {
                         if permission.status == .authorized {
-                            Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.green)
+                            Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.accent)
                         } else {
                             Button(permission.status == .notDetermined ? "Allow camera" : "Open Settings") {
                                 if permission.status == .notDetermined { Task { await permission.requestAccess() } }
@@ -101,7 +101,7 @@ struct PermissionControls: View {
                     Divider()
                     PreferenceRow(title: "Accessibility", subtitle: "Only needed to send keyboard shortcuts.", symbol: "accessibility") {
                         if appState.accessibilityGranted {
-                            Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.green)
+                            Label("Allowed", systemImage: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(VisionStyle.accent)
                         } else {
                             Button("Allow access", action: appState.requestAccessibility).controlSize(.small)
                         }
